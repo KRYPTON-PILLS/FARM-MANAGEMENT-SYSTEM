@@ -199,7 +199,6 @@ export default function App() {
         }}
       />
 
-      {/* ── TRANSITION LOG DRAWER ── */}
       {showLog && (
         <div className="fixed inset-0 z-50 bg-black/40 flex justify-end" onClick={() => setShowLog(false)}>
           <div className="w-96 bg-white h-full shadow-2xl flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
