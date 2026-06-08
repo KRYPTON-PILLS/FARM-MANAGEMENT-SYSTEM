@@ -1,15 +1,19 @@
-import { Routes, Route, NavLink, useNavigate } from "react-router-dom";
+import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { useContext, useState } from "react";
 import { FarmContext } from "./context/FarmContext";
+import { useAuth } from "./context/AuthContext.jsx";
 import TransitionNotifications from "./components/TransitionNotifications";
 import { ActivityPlannerModal, NotificationCenter } from "./components/AssistantComponents.jsx";
 
-/* ── Pages ── */
+/* -- Pages -- */
 import Dashboard         from "./pages/Dashboard.jsx";
 import Animals           from "./pages/Animals.jsx";
 import Crops             from "./pages/Crops.jsx";
 import Reports           from "./pages/Reports.jsx";
 import AssistantHub      from "./pages/AssistantHub.jsx";
+import Login             from "./pages/Login.jsx";
+import Signup            from "./pages/Signup.jsx";
+import ProtectedRoute    from "./components/ProtectedRoute.jsx";
 
 /* Cattle */
 import Cattle            from "./pages/Cattle.jsx";
@@ -39,17 +43,16 @@ import RamsProfile       from "./pages/RamsProfile.jsx";
 
 /* Goats */
 import Goats             from "./pages/Goats.jsx";
-import Bucks              from "./pages/Bucks.jsx";
-import BuckProfile        from "./pages/BuckProfile.jsx";
+import Bucks             from "./pages/Bucks.jsx";
+import BuckProfile       from "./pages/BuckProfile.jsx";
 import Does              from "./pages/Does.jsx";
 import DoeProfile        from "./pages/DoeProfile.jsx";
-import Kids               from "./pages/Kids.jsx";
+import Kids              from "./pages/Kids.jsx";
 import KidProfile        from "./pages/KidProfile.jsx";
 import Bucklings         from "./pages/Bucklings.jsx";
 import BucklingProfile   from "./pages/BucklingProfile.jsx";
 import DoelingsPage       from "./pages/Doelings.jsx";
 import DoelingProfile    from "./pages/DoelingProfile.jsx";
-
 
 /* Poultry */
 import Poultry           from "./pages/Poultry.jsx";
@@ -61,7 +64,6 @@ import Pigs              from "./pages/Pigs.jsx";
 /* Crops */
 import CropProfile         from "./pages/CropProfile.jsx";
 
-
 const TYPE_LABELS = {
   "calf":"Calf","bull-calf":"Bull Calf","heifer":"Heifer","bull":"Bull","cow":"Cow",
   "lamb":"Lamb","ewe-lamb":"Ewe Lamb","ram-lamb":"Ram Lamb","ewe":"Ewe","ram":"Ram",
@@ -72,27 +74,51 @@ const navLink = ({ isActive }) =>
 
 export default function App() {
   const { transitionLog, pendingNotifications, alerts, activities, dismissAlert, addActivity } = useContext(FarmContext);
+  const { user, logout } = useAuth();
   const [showLog, setShowLog] = useState(false);
   const [showActivityPlanner, setShowActivityPlanner] = useState(false);
 
+  /* =========================
+     🔴 AUTH MODE (NOT LOGGED IN)
+     ========================= */
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
+
   return (
     <div className="app-shell">
-
-      {/* ── SIDEBAR ── */}
       <div className="app-sidebar w-64 bg-green-900 text-white p-6 shadow-xl flex flex-col">
         <h1 className="text-2xl font-bold mb-8">🌿 Farm System</h1>
 
         <ul className="space-y-2 flex-1">
           <li><NavLink to="/dashboard" className={navLink}>📊 Dashboard</NavLink></li>
-          <li><NavLink to="/assistant"   className={navLink}>🤖 Farm Assistant</NavLink></li>
-          <li><NavLink to="/animals"   className={navLink}>🐄 Animals</NavLink></li>
-          <li><NavLink to="/crops"     className={navLink}>🌱 Crops</NavLink></li>
-          <li><NavLink to="/reports"   className={navLink}>📈 Reports</NavLink></li>
+          <li><NavLink to="/assistant" className={navLink}>🤖 Farm Assistant</NavLink></li>
+          <li><NavLink to="/animals" className={navLink}>🐄 Animals</NavLink></li>
+          <li><NavLink to="/crops" className={navLink}>🌱 Crops</NavLink></li>
+          <li><NavLink to="/reports" className={navLink}>📈 Reports</NavLink></li>
         </ul>
 
-        {/* Activity Planner Button */}
-        <div className="mb-4 border-t border-green-700 pt-4">
-          <button 
+        <div className="mb-4 border-t border-green-700 pt-4 space-y-3">
+          <div className="rounded-2xl bg-green-800/80 p-3 text-xs text-slate-100">
+            <div className="font-semibold">Signed in as</div>
+            <div className="break-words text-sm mt-1">{user?.email || "Farm User"}</div>
+          </div>
+
+         <button
+            onClick={logout}
+            className="w-full rounded-2xl bg-rose-600 px-4 py-2 text-white font-semibold transition hover:bg-rose-500"
+          >
+            Sign out
+          </button>
+
+          <button
             onClick={() => setShowActivityPlanner(true)}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-700 hover:bg-green-600 rounded transition font-semibold text-sm"
           >
@@ -100,7 +126,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* Transition log */}
         <div className="pt-4 border-t border-green-700">
           <button onClick={() => setShowLog(true)}
             className="w-full flex items-center justify-between p-2 rounded hover:bg-green-700 transition text-sm">
@@ -114,82 +139,67 @@ export default function App() {
         </div>
       </div>
 
-      {/* ── MAIN CONTENT ── */}
       <div className="app-main">
         <Routes>
-          {/* Core */}
-          <Route path="/"          element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/assistant" element={<AssistantHub />} />
-          <Route path="/animals"   element={<Animals />} />
-          <Route path="/crops"     element={<Crops />} />
-          <Route path="/reports"   element={<Reports />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/assistant" element={<ProtectedRoute><AssistantHub /></ProtectedRoute>} />
+          <Route path="/animals" element={<ProtectedRoute><Animals /></ProtectedRoute>} />
+          <Route path="/crops" element={<ProtectedRoute><Crops /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-          {/* Cattle */}
-          <Route path="/animals/cattle"                  element={<Cattle />} />
-          <Route path="/animals/cattle/bulls"            element={<Bulls />} />
-          <Route path="/animals/cattle/bulls/:id"        element={<BullsProfile />} />
-          <Route path="/animals/cattle/cows"             element={<Cows />} />
-          <Route path="/animals/cattle/cows/:id"         element={<CowsProfile />} />
-          <Route path="/animals/cattle/bull-calves"      element={<BullCalves />} />
-          <Route path="/animals/cattle/bull-calves/:id"  element={<BullCalvesProfile />} />
-          <Route path="/animals/cattle/heifers"          element={<Heifers />} />
-          <Route path="/animals/cattle/heifers/:id"      element={<HeiferProfile />} />
-          <Route path="/animals/cattle/calves"           element={<Calves />} />
-          <Route path="/animals/cattle/calves/:id"       element={<CalfProfile />} />
+          <Route path="/animals/cattle" element={<Cattle />} />
+          <Route path="/animals/cattle/bulls" element={<Bulls />} />
+          <Route path="/animals/cattle/bulls/:id" element={<BullsProfile />} />
+          <Route path="/animals/cattle/cows" element={<Cows />} />
+          <Route path="/animals/cattle/cows/:id" element={<CowsProfile />} />
+          <Route path="/animals/cattle/bull-calves" element={<BullCalves />} />
+          <Route path="/animals/cattle/bull-calves/:id" element={<BullCalvesProfile />} />
+          <Route path="/animals/cattle/heifers" element={<Heifers />} />
+          <Route path="/animals/cattle/heifers/:id" element={<HeiferProfile />} />
+          <Route path="/animals/cattle/calves" element={<Calves />} />
+          <Route path="/animals/cattle/calves/:id" element={<CalfProfile />} />
 
-          {/* Sheep */}
-          <Route path="/animals/sheep"                   element={<Sheep />} />
-          <Route path="/animals/sheep/lambs"             element={<Lambs />} />
-          <Route path="/animals/sheep/lambs/:id"         element={<LambProfile />} />
-          <Route path="/animals/sheep/ewe-lambs"         element={<EweLambs />} />
-          <Route path="/animals/sheep/ewe-lambs/:id"     element={<EweLambProfile />} />
-          <Route path="/animals/sheep/ram-lambs"         element={<RamLambs />} />
-          <Route path="/animals/sheep/ram-lambs/:id"     element={<RamLambProfile />} />
-          <Route path="/animals/sheep/ewes"              element={<Ewes />} />
-          <Route path="/animals/sheep/ewes/:id"          element={<EwesProfile />} />
-          <Route path="/animals/sheep/rams"              element={<Rams />} />
-          <Route path="/animals/sheep/rams/:id"          element={<RamsProfile />} />
+          <Route path="/animals/sheep" element={<Sheep />} />
+          <Route path="/animals/sheep/lambs" element={<Lambs />} />
+          <Route path="/animals/sheep/lambs/:id" element={<LambProfile />} />
+          <Route path="/animals/sheep/ewe-lambs" element={<EweLambs />} />
+          <Route path="/animals/sheep/ewe-lambs/:id" element={<EweLambProfile />} />
+          <Route path="/animals/sheep/ram-lambs" element={<RamLambs />} />
+          <Route path="/animals/sheep/ram-lambs/:id" element={<RamLambProfile />} />
+          <Route path="/animals/sheep/ewes" element={<Ewes />} />
+          <Route path="/animals/sheep/ewes/:id" element={<EwesProfile />} />
+          <Route path="/animals/sheep/rams" element={<Rams />} />
+          <Route path="/animals/sheep/rams/:id" element={<RamsProfile />} />
 
-          {/* Goats */}
-          <Route path="/animals/goats"                   element={<Goats />} />
-          <Route path="/animals/goats/bucks"             element={<Bucks />} />
-          <Route path="/animals/goats/bucks/:id"         element={<BuckProfile />} />
-          <Route path="/animals/goats/does"              element={<Does />} />
-          <Route path="/animals/goats/does/:id"          element={<DoeProfile />} />
-          <Route path="/animals/goats/kids"              element={<Kids />} />
-          <Route path="/animals/goats/kids/:id"          element={<KidProfile />} />
-          <Route path="/animals/goats/bucklings"         element={<Bucklings />} />
-          <Route path="/animals/goats/bucklings/:id"     element={<BucklingProfile />} />
-          <Route path="/animals/goats/doelings"          element={<DoelingsPage />} />
-          <Route path="/animals/goats/doelings/:id"      element={<DoelingProfile />} />
+          <Route path="/animals/goats" element={<Goats />} />
+          <Route path="/animals/goats/bucks" element={<Bucks />} />
+          <Route path="/animals/goats/bucks/:id" element={<BuckProfile />} />
+          <Route path="/animals/goats/does" element={<Does />} />
+          <Route path="/animals/goats/does/:id" element={<DoeProfile />} />
+          <Route path="/animals/goats/kids" element={<Kids />} />
+          <Route path="/animals/goats/kids/:id" element={<KidProfile />} />
+          <Route path="/animals/goats/bucklings" element={<Bucklings />} />
+          <Route path="/animals/goats/bucklings/:id" element={<BucklingProfile />} />
+          <Route path="/animals/goats/doelings" element={<DoelingsPage />} />
+          <Route path="/animals/goats/doelings/:id" element={<DoelingProfile />} />
 
-
-          {/* Pigs */}
-          <Route path="/animals/pigs"                    element={<Pigs />} />
-
-          {/* Poultry */}
-          <Route path="/animals/poultry"                 element={<Poultry />} />
-          <Route path="/animals/poultry/chicken"         element={<Chicken />} />
-
-          {/* Crops */}
-          <Route path="/crops/:id"                      element={<CropProfile />} />
-
-
+          <Route path="/animals/pigs" element={<Pigs />} />
+          <Route path="/animals/poultry" element={<Poultry />} />
+          <Route path="/animals/poultry/chicken" element={<Chicken />} />
+          <Route path="/crops/:id" element={<CropProfile />} />
         </Routes>
       </div>
 
-      {/* ── TOAST NOTIFICATIONS ── */}
       <TransitionNotifications />
-
-      {/* ── NOTIFICATION CENTER ── */}
       <NotificationCenter 
         alerts={alerts} 
         activities={activities}
         onDismiss={dismissAlert}
       />
 
-      {/* ── ACTIVITY PLANNER MODAL ── */}
       <ActivityPlannerModal 
         isOpen={showActivityPlanner}
         onClose={() => setShowActivityPlanner(false)}
@@ -219,7 +229,7 @@ export default function App() {
                     <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-bold text-gray-900 text-sm">{n.name}</span>
-                        <span className="text-gray-300 text-xs">→</span>
+                        <span className="text-gray-300 text-xs">?</span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full text-white
                           ${n.to==="bull"||n.to==="ram"?"bg-green-700":
                             n.to==="cow"||n.to==="ewe"?"bg-pink-600":
@@ -228,7 +238,7 @@ export default function App() {
                           {TYPE_LABELS[n.to]||n.to}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500">{TYPE_LABELS[n.from]||n.from} → {TYPE_LABELS[n.to]||n.to}</p>
+                      <p className="text-xs text-gray-500">{TYPE_LABELS[n.from]||n.from} ? {TYPE_LABELS[n.to]||n.to}</p>
                       <p className="text-xs text-gray-400 italic mt-0.5">{n.reason}</p>
                       {n.date && <p className="text-xs text-gray-300 mt-1">{n.date}</p>}
                     </div>
@@ -244,4 +254,6 @@ export default function App() {
       )}
     </div>
   );
-}
+} 
+
+  
