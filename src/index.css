@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gradient-to-br from-green-50 to-green-100 text-gray-800;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* App shell: full viewport, no page-level scroll */
+.app-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar: fully fixed, never scrolls */
+.app-sidebar {
+  height: 100vh;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Main content: the ONLY thing that scrolls */
+.app-main {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem;
+}
+
+@keyframes fade {
+  from { opacity: 0.4; transform: scale(1.02); }
+  to   { opacity: 1;   transform: scale(1); }
+}
+
+.animate-fade {
+  animation: fade 2s ease-in-out;
+}
