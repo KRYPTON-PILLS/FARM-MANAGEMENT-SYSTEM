@@ -28,6 +28,24 @@ body,
   overflow: hidden;
 }
 
+/* MOBILE */
+@media (max-width: 768px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .app-sidebar {
+    width: 100% !important;
+    height: auto;
+  }
+
+  .app-main {
+    padding: 1rem;
+    height: auto;
+  }
+}
+
+
 /* Main content: the ONLY thing that scrolls */
 .app-main {
   flex: 1;

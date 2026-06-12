@@ -118,7 +118,7 @@ function FarmShell() {
     <div className="app-shell">
 
       {/* ── SIDEBAR ── */}
-      <div className="app-sidebar w-64 bg-green-900 text-white p-6 shadow-xl flex flex-col">
+      <div className="app-sidebar w-full md:w-64 bg-green-900 text-white md:p-6 shadow-xl flex flex-col">
         <h1 className="text-2xl font-bold mb-8">🌿 Farm System</h1>
 
         <ul className="space-y-2 flex-1">
