@@ -1,101 +1,53 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { auth, firebaseAvailable } from "../firebaseConfig.js";
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  setPersistence,
-  inMemoryPersistence,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 
 const AuthContext = createContext();
 
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState(null);
-  const devAuth = import.meta.env.VITE_DEV_AUTH === "true" ;
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading,     setLoading]     = useState(true);
 
   useEffect(() => {
-    if (!firebaseAvailable) {
-      // If firebase isn't available but devAuth is enabled, allow a mock flow.
-      if (devAuth) {
-        setUser(null);
-        setLoading(false);
-        return () => {};
-      }
-      // If not using dev auth, avoid hanging the UI.
-      setUser(null);
+    if (!firebaseAvailable || !auth) {
       setLoading(false);
-      return () => {};
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, []);
-
-  const signup = async (email, password) => {
-    if (!firebaseAvailable && !devAuth) throw new Error("Firebase not configured for signup");
-    setAuthError(null);
-    try {
-      if (!firebaseAvailable && devAuth) {
-        // Mock signup for local development
-        const mockUser = { email, uid: `dev-${Date.now()}` };
-        setUser(mockUser);
-        return mockUser;
-      }
-      await setPersistence(auth, inMemoryPersistence);
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      setUser(result.user);
-      return result.user;
-    } catch (error) {
-      setAuthError(error.message);
-      throw error;
-    }
-  };
-
-  const login = async (email, password) => {
-    if (!firebaseAvailable && !devAuth) throw new Error("Firebase not configured for login");
-    setAuthError(null);
-    try {
-      if (!firebaseAvailable && devAuth) {
-        // Mock login for local development
-        const mockUser = { email, uid: `dev-${Date.now()}` };
-        setUser(mockUser);
-        return mockUser;
-      }
-      await setPersistence(auth, inMemoryPersistence);
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      setUser(result.user);
-      return result.user;
-    } catch (error) {
-      setAuthError(error.message);
-      throw error;
-    }
-  };
-
-  const logout = async () => {
-    if (!firebaseAvailable && devAuth) {
-      setUser(null);
       return;
     }
-    if (!firebaseAvailable) return;
-    setAuthError(null);
-    await signOut(auth);
-    setUser(null);
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
+
+  const login  = (email, pw) => signInWithEmailAndPassword(auth, email, pw);
+  const signup = (email, pw) => createUserWithEmailAndPassword(auth, email, pw);
+  const logout = ()          => signOut(auth);
+  const resetPassword = (email) => sendPasswordResetEmail(auth, email);
+
+  const value = {
+    currentUser,
+    loading,
+    firebaseAvailable,
+    login,
+    signup,
+    logout,
+    resetPassword,
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, authError, signup, login, logout, firebaseAvailable, devAuth }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

@@ -1,6 +1,56 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useMemo } from "react";
 import { FarmContext } from "../context/FarmContext";
 import { ALERT_ICONS, ALERT_SEVERITY, formatAlertTime } from "../utils/farmAssistant.js";
+
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+const MONTHS = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December"
+];
+
+function buildCalendarDays(year, month) {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  const startDow = (firstDay.getDay() + 6) % 7;
+  const totalDays = lastDay.getDate();
+
+  const days = [];
+
+  const prevLast = new Date(year, month, 0).getDate();
+
+  for (let i = startDow - 1; i >= 0; i--) {
+    days.push({
+      date: new Date(year, month - 1, prevLast - i),
+      current: false,
+    });
+  }
+
+  for (let d = 1; d <= totalDays; d++) {
+    days.push({
+      date: new Date(year, month, d),
+      current: true,
+    });
+  }
+
+  const remainder = (7 - (days.length % 7)) % 7;
+
+  for (let d = 1; d <= remainder; d++) {
+    days.push({
+      date: new Date(year, month + 1, d),
+      current: false,
+    });
+  }
+
+  return days;
+}
+
+function toDateKey(date) {
+  return `${date.getFullYear()}-${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 
 export default function AssistantHub() {
   const {
@@ -15,6 +65,12 @@ export default function AssistantHub() {
 
   const [activeTab, setActiveTab] = useState("alerts");
   const [showDismissed, setShowDismissed] = useState(false);
+  const today = new Date();
+
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [selectedDay, setSelectedDay] = useState(toDateKey(today));
+
 
   // Filter alerts
   const activeAlerts = alerts.filter((a) => !dismissedAlerts.includes(a.id));
@@ -31,6 +87,49 @@ export default function AssistantHub() {
   // Filter activities
   const pendingActivities = activities.filter((a) => !a.completed);
   const completedActivities = activities.filter((a) => a.completed);
+
+  const activityMap = useMemo(() => {
+    const map = {};
+
+    activities.forEach((a) => {
+      if (!a.dueDate) return;
+
+      const key = a.dueDate.slice(0, 10);
+
+      if (!map[key]) {
+        map[key] = [];
+      }
+
+      map[key].push(a);
+    });
+
+    return map;
+  }, [activities]);
+
+  const calDays = useMemo(
+    () => buildCalendarDays(viewYear, viewMonth),
+    [viewYear, viewMonth]
+  );
+
+  const prevMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  };
+
+
 
   const getSeverityColor = (severity) => {
     switch (severity) {
@@ -214,6 +313,16 @@ export default function AssistantHub() {
         {/* Tabs */}
         <div className="flex gap-4 mb-6 border-b border-gray-200">
           <button
+            onClick={() => setActiveTab("calendar")}
+            className={`px-4 py-3 font-semibold border-b-2 transition ${
+              activeTab === "calendar"
+                ? "border-green-600 text-green-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Calendar ({activities.length})
+          </button>
+          <button
             onClick={() => setActiveTab("alerts")}
             className={`px-4 py-3 font-semibold border-b-2 transition ${
               activeTab === "alerts"
@@ -223,6 +332,7 @@ export default function AssistantHub() {
           >
             Alerts ({activeAlerts.length})
           </button>
+          
           <button
             onClick={() => setActiveTab("activities")}
             className={`px-4 py-3 font-semibold border-b-2 transition ${
@@ -236,6 +346,73 @@ export default function AssistantHub() {
         </div>
 
         {/* Content */}
+         {activeTab === "calendar" && (
+          <div className="bg-white rounded-lg shadow p-6">
+
+            <div className="flex justify-between items-center mb-6">
+              <button
+                onClick={prevMonth}
+                className="px-3 py-2 bg-gray-100 rounded"
+              >
+                ←
+              </button>
+
+              <h2 className="text-xl font-bold">
+                {MONTHS[viewMonth]} {viewYear}
+              </h2>
+
+              <button
+                onClick={nextMonth}
+                className="px-3 py-2 bg-gray-100 rounded"
+              >
+                →
+              </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {DAYS.map((d) => (
+                <div
+                  key={d}
+                  className="text-center font-bold py-2"
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+              {calDays.map(({ date, current }, i) => {
+                const key = toDateKey(date);
+
+                const dayActivities =
+                  activityMap[key] || [];
+
+                return (
+                  <div
+                    key={i}
+                    className={`border p-2 min-h-[100px]
+                      ${current ? "bg-white" : "bg-gray-100"}
+                    `}
+                  >
+                    <div className="font-semibold mb-1">
+                      {date.getDate()}
+                    </div>
+
+                    {dayActivities.map((a) => (
+                      <div
+                        key={a.id}
+                        className="bg-green-100 text-xs rounded px-1 py-1 mb-1 truncate"
+                      >
+                        {a.task}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        )}
         {activeTab === "alerts" && (
           <div className="bg-white rounded-lg shadow p-6">
             {/* Critical Alerts */}
@@ -334,6 +511,8 @@ export default function AssistantHub() {
             )}
           </div>
         )}
+
+       
       </div>
     </div>
   );

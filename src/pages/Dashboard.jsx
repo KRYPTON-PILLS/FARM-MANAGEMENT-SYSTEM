@@ -9,10 +9,14 @@ import {
 export default function Dashboard() {
   const { animals = [] } = useContext(FarmContext);
 
-  /* ─── LIVE STATS ─── */
-  const totalAnimals = animals.length;
+  /* ------FILTER OUT COVER IMAGES (those with __coverKey)------ */
+  const realAnimals = animals.filter(a => !a.__coverKey);
 
-  const cattle = animals.filter((a) => a.category === "cattle");
+
+  /* ─── LIVE STATS ─── */
+  const totalAnimals = realAnimals.length;
+
+  const cattle = realAnimals.filter((a) => a.category === "cattle");
   const bulls   = cattle.filter((a) => a.type?.toLowerCase() === "bull");
   const cows    = cattle.filter((a) => a.type?.toLowerCase() === "cow");
   const heifers = cattle.filter((a) => a.type?.toLowerCase() === "heifer");
@@ -22,15 +26,17 @@ export default function Dashboard() {
       a.type?.toLowerCase() === "bull-calf"
   );
 
-  const healthyCount  = animals.filter((a) => a.status === "Healthy").length;
-  const sickCount     = animals.filter((a) => a.status === "Sick").length;
-  const treatmentCount = animals.filter((a) => a.status === "Under Treatment").length;
-  const soldCount     = animals.filter((a) => a.status === "Sold").length;
+  const healthyCount  = realAnimals.filter((a) => a.status === "Healthy").length;
+  const sickCount     = realAnimals.filter((a) => a.status === "Sick").length;
+  const treatmentCount = realAnimals.filter((a) => a.status === "Under Treatment").length;
+  const soldCount     = realAnimals.filter((a) => a.status === "Sold").length;
+
 
   /* ─── CATTLE BREAKDOWN CHART DATA ─── */
   const cattleBreakdown = [
     { name: "Bulls",   count: bulls.length },
     { name: "Cows",    count: cows.length },
+    { name: "Bull-Calves", count: calves.length },
     { name: "Heifers", count: heifers.length },
     { name: "Calves",  count: calves.length },
   ];
@@ -47,7 +53,7 @@ export default function Dashboard() {
   ];
 
   /* ─── RECENT ANIMALS (last 4 added) ─── */
-  const recentAnimals = [...animals]
+  const recentAnimals = [...realAnimals]
     .sort((a, b) => b.id - a.id)
     .slice(0, 4);
 
