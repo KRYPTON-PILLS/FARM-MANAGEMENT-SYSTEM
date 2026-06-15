@@ -45,7 +45,7 @@ const HEALTH_COLORS = {
 };
 
 const GROWTH_STAGES = ["Seedling","Vegetative","Tillering","Flowering","Fruiting","Maturing","Ready to Harvest"];
-const ACTIVITY_TYPES = ["Planting","Weeding","Fertilizer Application","Spraying","Irrigation","Pruning","Harvesting","Soil Testing","Other"];
+const ACTIVITY_TYPES = ["Land Preparation","Planting","Weeding","Fertilizer Application","Spraying","Irrigation","Pruning","Harvesting","Other"];
 const EXPENSE_CATEGORIES = ["Seeds","Fertilizer","Pesticides","Labour","Transport","Machinery","Irrigation","Other"];
 const YIELD_UNITS = ["KG","Tonnes","Bags","Crates","Litres","Bundles"];
 

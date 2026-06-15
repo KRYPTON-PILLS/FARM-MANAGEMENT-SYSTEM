@@ -1,4 +1,6 @@
 import { createContext, useState, useEffect, useCallback } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebaseConfig.js";
 import { generateAllAlerts } from "../utils/farmAssistant.js";
 import { loadFarmState, saveFarmState } from "../db/farmDB.js";
 
@@ -15,7 +17,7 @@ export function calcAgeMonths(animal) {
   if (isNaN(raw)) return null;
   const t = animal.type?.toLowerCase();
   if (["bull","cow","ewe","ram","buck","doe"].includes(t)) return raw * 12;
-  return raw; // months for juveniles
+  return raw;
 }
 
 export function formatAge(animal) {
@@ -41,7 +43,7 @@ export function formatAge(animal) {
 /* ════════════ TRANSITION ENGINE ════════════ */
 
 function runTransitions(animals) {
-  const log  = [];
+  const log   = [];
   const today = new Date().toISOString().split("T")[0];
 
   const next = animals.map((a) => {
@@ -52,7 +54,7 @@ function runTransitions(animals) {
     /* ─── CATTLE ─── */
     if (type === "calf" && months !== null && months >= 12) {
       const to = a.gender === "Male" ? "bull-calf" : "heifer";
-      log.push({ id:a.id, name:a.name, from:"calf", to, reason:`Reached 12 months`, date:today });
+      log.push({ id:a.id, name:a.name, from:"calf", to, reason:"Reached 12 months", date:today });
       return { ...a, type:to, age:String(Math.round(months)), graduated:true };
     }
     if (type === "bull-calf" && months !== null) {
@@ -76,7 +78,7 @@ function runTransitions(animals) {
     /* ─── SHEEP ─── */
     if (type === "lamb" && months !== null && months >= 6) {
       const to = a.gender === "Male" ? "ram-lamb" : "ewe-lamb";
-      log.push({ id:a.id, name:a.name, from:"lamb", to, reason:`Reached 6 months`, date:today });
+      log.push({ id:a.id, name:a.name, from:"lamb", to, reason:"Reached 6 months", date:today });
       return { ...a, type:to, age:String(Math.round(months)), graduated:true,
         heatRecords:a.heatRecords||[], drenchingRecords:a.drenchingRecords||[],
         growthRecords:a.growthRecords||[], feedRecords:a.feedRecords||[], medicalLog:a.medicalLog||[] };
@@ -105,18 +107,14 @@ function runTransitions(animals) {
     }
 
     /* ─── GOATS ─── */
-    // kid → buckling (male) or doeling (female) at 3 months
     if (type === "kid" && months !== null && months >= 3) {
       const to = a.gender === "Male" ? "buckling" : "doeling";
-      log.push({ id:a.id, name:a.name, from:"kid", to, reason:`Reached 3 months`, date:today });
+      log.push({ id:a.id, name:a.name, from:"kid", to, reason:"Reached 3 months", date:today });
       return { ...a, type:to, age:String(Math.round(months)), graduated:true,
         drenchingRecords:a.drenchingRecords||[], growthRecords:a.growthRecords||[],
         feedRecords:a.feedRecords||[], medicalLog:a.medicalLog||[],
         ...(to === "doeling" ? { heatRecords:a.heatRecords||[], readinessStatus:"Growing" } : { maturityStatus:"Growing" }) };
     }
-
-    // buckling → buck at 12 months
-    // (if came through kid stage via birthDate: transition at 15 months total)
     if (type === "buckling" && months !== null) {
       const threshold = a.birthDate ? 15 : 12;
       if (months >= threshold) {
@@ -126,8 +124,6 @@ function runTransitions(animals) {
           growthRecords:a.growthRecords||[], feedRecords:a.feedRecords||[], medicalLog:a.medicalLog||[] };
       }
     }
-
-    // doeling → doe at 12 months OR after first kidding
     if (type === "doeling") {
       const ageReady  = months !== null && months >= 12;
       const hasKidded = (a.kiddingRecords?.length > 0) || (a.matingRecords?.some((r) => r.kiddingComplete));
@@ -168,8 +164,6 @@ export function FarmProvider({ children }) {
   const [crops,                setCrops]                = useState([]);
   const [transitionLog,        setTransitionLog]        = useState([]);
   const [pendingNotifications, setPendingNotifications] = useState([]);
-
-  // Farm Assistant State
   const [activities,           setActivities]           = useState([]);
   const [alerts,               setAlerts]               = useState([]);
   const [feedInventory,        setFeedInventory]        = useState([]);
@@ -178,7 +172,11 @@ export function FarmProvider({ children }) {
   const [salesRecords,         setSalesRecords]         = useState([]);
   const [expenseRecords,       setExpenseRecords]       = useState([]);
   const [dismissedAlerts,      setDismissedAlerts]      = useState([]);
+
+  // isHydrated: true once we've finished loading from Firestore for the current user
   const [isHydrated,           setIsHydrated]           = useState(false);
+  // uid: tracks which user is currently loaded so we can reload on user switch
+  const [loadedUid,            setLoadedUid]            = useState(null);
 
   const applyTransitions = useCallback((current) => {
     const refreshed     = refreshAgeFields(current);
@@ -191,67 +189,71 @@ export function FarmProvider({ children }) {
     return refreshed;
   }, []);
 
-  /* ─── Generate alerts whenever farm data changes ─── */
-  useEffect(() => {
-    const farmData = {
-      activities: activities.filter((a) => !a.completed),
-      animals,
-      feedInventory,
-      productionHistory,
-      mortalityRecords,
-      salesRecords,
-      expenseRecords,
-    };
-
-    const generatedAlerts = generateAllAlerts(farmData);
-    const activeAlerts = generatedAlerts.filter(
-      (a) => !dismissedAlerts.includes(a.id)
-    );
-    setAlerts(activeAlerts);
-  }, [
-    activities,
-    animals,
-    feedInventory,
-    productionHistory,
-    mortalityRecords,
-    salesRecords,
-    expenseRecords,
-    dismissedAlerts,
-  ]);
-
-  /* Load persisted farm assistant state from IndexedDB */
-  useEffect(() => {
-    let canceled = false;
-
-    loadFarmState()
-      .then((stored) => {
-        if (canceled) return;
-        if (stored.animals) setAnimals(stored.animals);
-        if (stored.crops) setCrops(stored.crops);
-        if (stored.transitionLog) setTransitionLog(stored.transitionLog);
-        if (stored.pendingNotifications) setPendingNotifications(stored.pendingNotifications);
-        if (stored.activities) setActivities(stored.activities);
-        if (stored.feedInventory) setFeedInventory(stored.feedInventory);
-        if (stored.productionHistory) setProductionHistory(stored.productionHistory);
-        if (stored.mortalityRecords) setMortalityRecords(stored.mortalityRecords);
-        if (stored.salesRecords) setSalesRecords(stored.salesRecords);
-        if (stored.expenseRecords) setExpenseRecords(stored.expenseRecords);
-        if (stored.dismissedAlerts) setDismissedAlerts(stored.dismissedAlerts);
-      })
-      .finally(() => {
-        if (!canceled) setIsHydrated(true);
-      });
-
-    return () => {
-      canceled = true;
-    };
+  /* ─── Reset all state to empty (called on logout or user switch) ─── */
+  const resetState = useCallback(() => {
+    setAnimals([]);
+    setCrops([]);
+    setTransitionLog([]);
+    setPendingNotifications([]);
+    setActivities([]);
+    setAlerts([]);
+    setFeedInventory([]);
+    setProductionHistory([]);
+    setMortalityRecords([]);
+    setSalesRecords([]);
+    setExpenseRecords([]);
+    setDismissedAlerts([]);
+    setIsHydrated(false);
+    setLoadedUid(null);
   }, []);
 
+  /* ─── Load farm data from Firestore ─── */
+  const loadForUser = useCallback(async (uid) => {
+    setIsHydrated(false);
+    try {
+      const stored = await loadFarmState();          // farmDB reads auth.currentUser internally
+      if (stored.animals)              setAnimals(stored.animals);
+      if (stored.crops)                setCrops(stored.crops);
+      if (stored.transitionLog)        setTransitionLog(stored.transitionLog);
+      if (stored.pendingNotifications) setPendingNotifications(stored.pendingNotifications);
+      if (stored.activities)           setActivities(stored.activities);
+      if (stored.feedInventory)        setFeedInventory(stored.feedInventory);
+      if (stored.productionHistory)    setProductionHistory(stored.productionHistory);
+      if (stored.mortalityRecords)     setMortalityRecords(stored.mortalityRecords);
+      if (stored.salesRecords)         setSalesRecords(stored.salesRecords);
+      if (stored.expenseRecords)       setExpenseRecords(stored.expenseRecords);
+      if (stored.dismissedAlerts)      setDismissedAlerts(stored.dismissedAlerts);
+    } catch (err) {
+      console.error("Failed to load farm data:", err);
+    } finally {
+      setLoadedUid(uid);
+      setIsHydrated(true);
+    }
+  }, []);
+
+  /* ─── Listen to Firebase auth — reload data whenever user changes ─── */
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // New user logged in (or page refreshed while logged in)
+        if (user.uid !== loadedUid) {
+          loadForUser(user.uid);
+        }
+      } else {
+        // Logged out — clear everything
+        resetState();
+      }
+    });
+    return () => unsubscribe();
+  }, [loadedUid, loadForUser, resetState]);
+
+  /* ─── Apply transitions once hydrated ─── */
   useEffect(() => {
     if (!isHydrated) return;
     setAnimals((prev) => applyTransitions(prev));
   }, [isHydrated, applyTransitions]);
 
+  /* ─── Save to Firestore whenever data changes ─── */
   useEffect(() => {
     if (!isHydrated) return;
     saveFarmState({
@@ -282,7 +284,22 @@ export function FarmProvider({ children }) {
     dismissedAlerts,
   ]);
 
-  /* Run every 24 hours */
+  /* ─── Generate alerts whenever farm data changes ─── */
+  useEffect(() => {
+    const farmData = {
+      activities: activities.filter((a) => !a.completed),
+      animals,
+      feedInventory,
+      productionHistory,
+      mortalityRecords,
+      salesRecords,
+      expenseRecords,
+    };
+    const generatedAlerts = generateAllAlerts(farmData);
+    setAlerts(generatedAlerts.filter((a) => !dismissedAlerts.includes(a.id)));
+  }, [activities, animals, feedInventory, productionHistory, mortalityRecords, salesRecords, expenseRecords, dismissedAlerts]);
+
+  /* ─── Run transitions every 24 hours ─── */
   useEffect(() => {
     const timer = setInterval(() => {
       setAnimals((prev) => applyTransitions(prev));
@@ -290,11 +307,11 @@ export function FarmProvider({ children }) {
     return () => clearInterval(timer);
   }, [applyTransitions]);
 
+  /* ─── Activity Management ─── */
   const dismissNotification = useCallback((idx) => {
     setPendingNotifications((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
-  /* ─── Activity Management ─── */
   const addActivity = useCallback((activity) => {
     const newActivity = {
       id: Date.now().toString(),
@@ -307,9 +324,7 @@ export function FarmProvider({ children }) {
   }, []);
 
   const updateActivity = useCallback((id, updates) => {
-    setActivities((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, ...updates } : a))
-    );
+    setActivities((prev) => prev.map((a) => (a.id === id ? { ...a, ...updates } : a)));
   }, []);
 
   const deleteActivity = useCallback((id) => {
@@ -335,58 +350,45 @@ export function FarmProvider({ children }) {
 
   /* ─── Production Records ─── */
   const addProductionRecord = useCallback((record) => {
-    const newRecord = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split("T")[0],
-      ...record,
-    };
+    const newRecord = { id: Date.now().toString(), date: new Date().toISOString().split("T")[0], ...record };
     setProductionHistory((prev) => [newRecord, ...prev]);
     return newRecord;
   }, []);
 
   /* ─── Mortality Records ─── */
   const addMortalityRecord = useCallback((record) => {
-    const newRecord = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split("T")[0],
-      count: 1,
-      ...record,
-    };
+    const newRecord = { id: Date.now().toString(), date: new Date().toISOString().split("T")[0], count: 1, ...record };
     setMortalityRecords((prev) => [newRecord, ...prev]);
     return newRecord;
   }, []);
 
   /* ─── Sales Records ─── */
   const addSalesRecord = useCallback((record) => {
-    const newRecord = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split("T")[0],
-      ...record,
-    };
+    const newRecord = { id: Date.now().toString(), date: new Date().toISOString().split("T")[0], ...record };
     setSalesRecords((prev) => [newRecord, ...prev]);
     return newRecord;
   }, []);
 
   /* ─── Expense Records ─── */
   const addExpenseRecord = useCallback((record) => {
-    const newRecord = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split("T")[0],
-      ...record,
-    };
+    const newRecord = { id: Date.now().toString(), date: new Date().toISOString().split("T")[0], ...record };
     setExpenseRecords((prev) => [newRecord, ...prev]);
     return newRecord;
   }, []);
 
+  /* ─── treatmentCount helper (used by Dashboard) ─── */
+  const treatmentCount = animals.filter(
+    (a) => !a.__coverKey && a.status === "In Treatment"
+  ).length;
+
   return (
     <FarmContext.Provider value={{
-      // Existing
       animals, setAnimals,
       crops,   setCrops,
       transitionLog, pendingNotifications, dismissNotification,
       calcAgeMonths, formatAge,
+      treatmentCount,
 
-      // Farm Assistant
       activities, setActivities, addActivity, updateActivity, deleteActivity, completeActivity,
       alerts, dismissAlert, undismissAlert, clearAllDismissedAlerts,
       feedInventory, setFeedInventory,
@@ -395,6 +397,8 @@ export function FarmProvider({ children }) {
       salesRecords, addSalesRecord,
       expenseRecords, addExpenseRecord,
       dismissedAlerts,
+
+      isHydrated,
     }}>
       {children}
     </FarmContext.Provider>

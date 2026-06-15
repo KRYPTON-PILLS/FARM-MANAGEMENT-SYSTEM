@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,16 +13,10 @@ const firebaseConfig = {
 
 const firebaseAvailable = Object.values(firebaseConfig).every(Boolean);
 
+const app  = firebaseAvailable ? initializeApp(firebaseConfig) : null;
 
-console.log(firebaseConfig);
-console.log("Firebase available:", firebaseAvailable);
+export const auth = firebaseAvailable ? getAuth(app)       : null;
+export const db   = firebaseAvailable ? getFirestore(app)  : null;
 
-
-const app = firebaseAvailable ? initializeApp(firebaseConfig) : null;
-export const auth = firebaseAvailable ? getAuth(app) : null;
-
-
-export {firebaseAvailable};
+export { firebaseAvailable };
 export default app;
-
-
