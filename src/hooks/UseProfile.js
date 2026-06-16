@@ -1,11 +1,23 @@
-import { useState, useCallback } from "react";
- 
-const STORAGE_KEY = "farm_user_profile";
- 
+/**
+ * UseProfile.js
+ *
+ * FIXED: Profile data is now saved to Firestore under
+ *   /farms/{uid}/profile/info
+ * so it syncs across every device automatically.
+ *
+ * Previously used localStorage — which is device-local
+ * and never leaves the browser it was created in.
+ */
+
+import { useState, useCallback, useEffect } from "react";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig.js";
+import { useAuth } from "../context/AuthContext.jsx";
+
 const DEFAULTS = {
   displayName:  "",
   phone:        "",
-  photoURL:     "",     // base64 data URL after upload
+  photoURL:     "",
   farmName:     "",
   farmLocation: "",
   farmSize:     "",
@@ -14,36 +26,74 @@ const DEFAULTS = {
   country:      "Kenya",
   bio:          "",
 };
- 
-function load() {
+
+/* ── Firestore helpers ── */
+async function loadFromFirestore(uid) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : { ...DEFAULTS };
-  } catch {
+    if (!uid || !db) return { ...DEFAULTS };
+    const ref  = doc(db, "farms", uid, "profile", "info");
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return { ...DEFAULTS };
+    return { ...DEFAULTS, ...snap.data() };
+  } catch (err) {
+    console.error("UseProfile loadFromFirestore error:", err);
     return { ...DEFAULTS };
   }
 }
- 
-function save(data) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+
+async function saveToFirestore(uid, data) {
+  try {
+    if (!uid || !db) return;
+    // Strip the photoURL if it's a large base64 string — store it separately
+    // or keep it if it's a remote URL. Base64 avatars can be large but Firestore
+    // allows up to 1MB per document, so it's fine for most profile photos.
+    const ref = doc(db, "farms", uid, "profile", "info");
+    await setDoc(ref, data, { merge: true });
+  } catch (err) {
+    console.error("UseProfile saveToFirestore error:", err);
+  }
 }
- 
+
 export function UseProfile() {
-  const [profile, setProfileState] = useState(load);
- 
+  const { currentUser } = useAuth();
+  const uid = currentUser?.uid ?? null;
+
+  const [profile,    setProfileState] = useState({ ...DEFAULTS });
+  const [loadedUid,  setLoadedUid]    = useState(null);
+
+  /* ── Load profile whenever the logged-in user changes ── */
+  useEffect(() => {
+    if (!uid) {
+      // Logged out — reset to defaults
+      setProfileState({ ...DEFAULTS });
+      setLoadedUid(null);
+      return;
+    }
+
+    if (uid === loadedUid) return; // already loaded for this user
+
+    loadFromFirestore(uid).then((data) => {
+      setProfileState(data);
+      setLoadedUid(uid);
+    });
+  }, [uid, loadedUid]);
+
+  /* ── Update profile and persist to Firestore ── */
   const updateProfile = useCallback((updates) => {
     setProfileState((prev) => {
       const next = { ...prev, ...updates };
-      save(next);
+      // Fire-and-forget — don't block the UI
+      if (uid) saveToFirestore(uid, next);
       return next;
     });
-  }, []);
- 
+  }, [uid]);
+
+  /* ── Reset profile to defaults ── */
   const resetProfile = useCallback(() => {
     const fresh = { ...DEFAULTS };
-    save(fresh);
     setProfileState(fresh);
-  }, []);
- 
+    if (uid) saveToFirestore(uid, fresh);
+  }, [uid]);
+
   return { profile, updateProfile, resetProfile };
 }
