@@ -73,32 +73,52 @@ export default function Sheep() {
 
   return (
     <div className="bg-green-50 relative p-6">
-      <button onClick={() => navigate(-1)}
-        className="absolute -top-4 -left-[15px] z-50 bg-white shadow-md w-11 h-11 rounded-full flex items-center justify-center hover:scale-110 transition">
+
+      {/* Back button */}
+      <button 
+        onClick={() => navigate(-1)}
+        className="absolute top-3 left-3 sm:-top-4 sm:left-[15px] z-50 bg-white shadow-md w-10 h-10  sm:w-11 sm:h-11 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition"
+        arial-label="Go back">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-green-700">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
       </button>
 
-      <div className="mb-6 ml-14">
-        <h2 className="text-3xl font-bold text-green-900">Sheep Management</h2>
-        <p className="text-green-700 font-semibold mt-1">Total sheep on farm: {allSheep.length}</p>
+      {/* Header — shifted right to clear the back button */}
+      <div className="mb-5 ml-12 sm:ml-14">
+        <h2 className="text-2xl font-bold text-green-900">Sheep Management</h2>
+        <p className="text-green-700 font-semibold mt-1 text-sm sm:text-base">
+          Total sheep on farm: {allSheep.length}
+        </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/*
+        Cards grid:
+        - Mobile:  1 col  → full-width portrait card, shorter height
+        - sm:      2 cols
+        - lg:      3 cols (original)
+      */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {categories.map((cat) => {
           const list  = allSheep.filter((a) => a.type?.toLowerCase() === cat.type);
           const count = list.length;
           return (
-            <div key={cat.key} className="relative h-72 rounded-2xl overflow-hidden shadow-xl group">
-              <img src={getCover(cat)} alt={cat.name}
+            <div 
+              key={cat.key}
+              /* Shorter on mobile (h-56), taller on sm+ (h-72) */
+              className="relative h-56 sm:h-72 rounded-2xl overflow-hidden shadow-xl group"
+              >
+              <img 
+                src={getCover(cat)} 
+                alt={cat.name}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                onError={(e) => { e.target.src = `https://placehold.co/600x288/f0fdf4/166534?text=${cat.name}`; }} />
+                onError={(e) => { e.target.src = `https://placehold.co/600x288/f0fdf4/166534?text=${cat.name}`; }} 
+                />
               <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60" />
 
               {/* top left */}
-              <div className="absolute top-4 left-4 z-10">
-                <h3 className="text-white text-xl font-bold drop-shadow">{cat.name}</h3>
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10">
+                <h3 className="text-white text-lg sm:text-xl font-bold drop-shadow">{cat.name}</h3>
                 <p className="text-white/80 text-xs mt-0.5">{cat.desc}</p>
                 <p className="text-white/90 text-sm font-semibold mt-1">Total: {count}</p>
               </div>
@@ -113,9 +133,11 @@ export default function Sheep() {
               </label>
 
               {/* bottom left: view button */}
-              <div className="absolute bottom-4 left-4 z-10">
-                <Link to={`/animals/sheep/${cat.key}`}
-                  className={`${cat.color} hover:opacity-90 text-white text-sm font-semibold px-5 py-2 rounded-xl shadow-lg backdrop-blur-sm transition`}>
+              <div className="absolute bottom-3 left-4 sm:bottom-4 sm:left-4 z-10">
+                <Link 
+                  to={`/animals/sheep/${cat.key}`}
+                  className={`${cat.color} hover:opacity-90 text-white text-sm font-semibold px-5 py-2 rounded-xl shadow-lg backdrop-blur-sm transition`}
+                  >
                   {cat.name}
                 </Link>
               </div>

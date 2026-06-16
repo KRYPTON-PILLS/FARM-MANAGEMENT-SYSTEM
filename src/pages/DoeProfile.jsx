@@ -64,9 +64,9 @@ export default function DoeProfile() {
   return (
     <div className="bg-pink-50 flex flex-col">
       {/* TOP BAR */}
-      <div className="flex items-center gap-4 px-6 py-4 bg-white shadow-sm">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-white shadow-sm flex-wrap">
         <button onClick={()=>navigate(-1)} className="bg-white shadow w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-pink-700"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg></button>
-        <h2 className="text-2xl font-bold text-pink-900">Doe Profile</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-pink-900">Doe Profile</h2>
         <div className="ml-auto flex items-center gap-2">
           <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor}`}>{doe.status}</span>
           <span className={`text-xs font-semibold px-3 py-1 rounded-full text-white ${pColor}`}>{doe.pregnancyStatus||"Open"}</span>
@@ -78,10 +78,10 @@ export default function DoeProfile() {
         🐐 {daysToKidding>0?`Expected kidding in ${daysToKidding} day${daysToKidding!==1?"s":""} (${latestMating.expectedKidding})`:daysToKidding===0?"🐐 Kidding expected TODAY!":"⚠️ Kidding overdue — please update the record"}
       </div>}
 
-      <div className="flex flex-1 gap-6 p-6 flex-wrap lg:flex-nowrap">
+      <div className="flex flex-1 gap-6 p-4 sm:p-6 flex-col lg:flex-row">
         {/* LEFT */}
-        <div className="flex flex-col gap-4 w-72 shrink-0">
-          <div className="relative h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
+        <div className="flex flex-col gap-4 w-full lg:w-72 lg:shrink-0">
+          <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
             {doe.image?<img src={doe.image} alt={doe.name} className="w-full h-full object-cover"/>:<div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>}
             <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer"><span className="opacity-0 group-hover:opacity-100 bg-white/90 text-pink-800 text-xs font-semibold px-3 py-1 rounded-full transition">Change photo</span><input type="file" accept="image/*" className="hidden" onChange={imgUp}/></label>
           </div>
@@ -115,7 +115,7 @@ export default function DoeProfile() {
         <div className="flex-1 flex flex-col gap-4">
           <div className="bg-white rounded-2xl shadow p-5">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1"><p className="text-xs font-semibold text-gray-400 uppercase mb-1">Name</p>{isEditing?<input value={edited.name||""} onChange={(e)=>uf("name",e.target.value)} className="text-2xl font-bold border-b border-pink-400 outline-none w-full"/>:<h3 className="text-2xl font-bold text-pink-900">{doe.name}</h3>}</div>
+              <div className="flex-1"><p className="text-xs font-semibold text-gray-400 uppercase mb-1">Name</p>{isEditing?<input value={edited.name||""} onChange={(e)=>uf("name",e.target.value)} className="text-xl sm:text-2xl font-bold border-b border-pink-400 outline-none w-full"/>:<h3 className="text-xl sm:text-2xl font-bold text-pink-900">{doe.name}</h3>}</div>
               {!isEditing?<button onClick={startEdit} className="bg-pink-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-pink-700 transition">Edit Profile</button>:<div className="flex gap-2"><button onClick={saveEdit} className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm">Save</button><button onClick={cancelEdit} className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm">Cancel</button></div>}
             </div>
             {isEditing&&<div className="mt-4 flex gap-4 flex-wrap">
@@ -125,7 +125,7 @@ export default function DoeProfile() {
           </div>
 
           {/* 7 ACTION CARDS */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <ActionCard title="Growth" count={gr.length} accent="rose" latest={gr.length>0?`${gr.at(-1).weight||"—"} kg`:null} latestDate={gr.at(-1)?.date} onAdd={()=>setModal("growth")} onView={()=>setModal("viewGrowth")} iconPath="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
             <ActionCard title="Milk Yield" count={mr.length} accent="blue" latest={mr.length>0?`${mr.at(-1).litres||"—"} L`:null} latestDate={mr.at(-1)?.date} onAdd={()=>setModal("milk")} onView={()=>setModal("viewMilk")} iconPath="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15M14.25 3.104c.251.023.501.05.75.082M19.8 15l-1.575 1.399A1.5 1.5 0 0117 17.58v.82A2.25 2.25 0 0114.75 20.625H9.25A2.25 2.25 0 017 18.4v-.82a1.5 1.5 0 01-.225-1.181L5 14.5m14.8.5l-5.8-4.5M5 14.5l5.8-4.5"/>
             <ActionCard title="Mating" count={matr.length} accent="violet" latest={matr.length>0?`Buck: ${matr.at(-1).buck||"—"}`:null} latestDate={matr.at(-1)?.dateMated} onAdd={()=>setModal("mating")} onView={()=>setModal("viewMating")} iconPath="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>

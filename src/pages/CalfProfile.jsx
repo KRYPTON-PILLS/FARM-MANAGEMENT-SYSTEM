@@ -24,8 +24,8 @@ function daysOld(birthDate) {
 
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center">
+      <div className="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
           <h3 className="text-lg font-bold text-orange-900">{title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
@@ -239,13 +239,13 @@ export default function CalfProfile() {
     <div className="bg-orange-50 flex flex-col">
 
       {/* TOP BAR */}
-      <div className="flex items-center gap-4 px-6 py-4 bg-white shadow-sm">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-white shadow-sm flex-wrap">
         <button onClick={() => navigate(-1)} className="bg-white shadow w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-orange-700">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
         </button>
-        <h2 className="text-2xl font-bold text-orange-900">Calf Profile</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-orange-900">Calf Profile</h2>
         <span className="text-sm text-gray-500 font-medium">{ageLabel(calf.birthDate)}</span>
         <div className="ml-auto flex items-center gap-2">
           <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor}`}>{calf.status}</span>
@@ -270,13 +270,13 @@ export default function CalfProfile() {
       )}
 
       {/* BODY */}
-      <div className="flex flex-1 gap-6 p-6 flex-wrap lg:flex-nowrap">
+      <div className="flex flex-1 gap-6 p-4 sm:p-6 flex-col lg:flex-row">
 
         {/* LEFT */}
-        <div className="flex flex-col gap-4 w-72 shrink-0">
+        <div className="flex flex-col gap-4 w-full lg:w-72 lg:shrink-0">
 
           {/* IMAGE */}
-          <div className="relative h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
+          <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
             {calf.image
               ? <img src={calf.image} alt={calf.name} className="w-full h-full object-cover" />
               : <div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>}
@@ -356,8 +356,8 @@ export default function CalfProfile() {
               <div className="flex-1">
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Name</p>
                 {isEditing
-                  ? <input value={edited.name || ""} onChange={(e) => updateField("name", e.target.value)} className="text-2xl font-bold border-b border-orange-400 outline-none w-full" />
-                  : <h3 className="text-2xl font-bold text-orange-900">{calf.name}</h3>}
+                  ? <input value={edited.name || ""} onChange={(e) => updateField("name", e.target.value)} className="text-xl sm:text-2xl font-bold border-b border-orange-400 outline-none w-full" />
+                  : <h3 className="text-xl sm:text-2xl font-bold text-orange-900">{calf.name}</h3>}
               </div>
               {!isEditing
                 ? <button onClick={startEditing} className="bg-orange-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-orange-600 transition">Edit Profile</button>
@@ -389,14 +389,14 @@ export default function CalfProfile() {
             <div className="bg-orange-100 rounded-2xl p-4 flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-orange-700 uppercase">Today's milk intake</p>
-                <p className="text-2xl font-bold text-orange-900">{todayMilk > 0 ? `${todayMilk} mL` : "Not fed yet today"}</p>
+                <p className="text-xl sm:text-2xl font-bold text-orange-900">{todayMilk > 0 ? `${todayMilk} mL` : "Not fed yet today"}</p>
               </div>
               <div className="text-4xl">🍼</div>
             </div>
           )}
 
           {/* 3 ACTION CARDS */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             {[
               { key:"growth",   title:"Growth Records", count:growthRecords.length,   accent:"orange",
                 latest: growthRecords.length > 0 ? `${growthRecords.at(-1).weight||"—"} kg` : null,
@@ -661,7 +661,7 @@ export default function CalfProfile() {
 
       {/* GRADUATE CONFIRMATION */}
       {graduateModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-green-900 mb-2">Graduate {calf.name}?</h3>
             <p className="text-sm text-gray-600 mb-4">

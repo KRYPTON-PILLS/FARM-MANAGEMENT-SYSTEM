@@ -14,39 +14,32 @@ body,
   overflow: hidden;
 }
 
-/* App shell: full viewport, no page-level scroll */
+/* ─────────────────────────────────────────
+   APP SHELL
+   Desktop: sidebar + main side by side
+   Mobile:  full-width stack (top bar + main + bottom nav)
+───────────────────────────────────────── */
 .app-shell {
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
-/* Sidebar: fully fixed, never scrolls */
+/* ─────────────────────────────────────────
+   SIDEBAR  (desktop only)
+───────────────────────────────────────── */
 .app-sidebar {
   height: 100vh;
   flex-shrink: 0;
   overflow: hidden;
 }
 
-/* MOBILE */
-@media (max-width: 768px) {
-  .app-shell {
-    flex-direction: column;
-  }
-
-  .app-sidebar {
-    width: 100% !important;
-    height: auto;
-  }
-
-  .app-main {
-    padding: 1rem;
-    height: auto;
-  }
-}
-
-
-/* Main content: the ONLY thing that scrolls */
+/* ─────────────────────────────────────────
+   MAIN CONTENT
+   Desktop: scrolls freely beside sidebar
+   Mobile:  push down below top bar (56px)
+            push up above bottom nav (64px)
+───────────────────────────────────────── */
 .app-main {
   flex: 1;
   height: 100vh;
@@ -55,6 +48,23 @@ body,
   padding: 1.5rem;
 }
 
+@media (max-width: 767px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .app-main {
+    /* 56px = mobile top bar height  |  64px = bottom nav height */
+    padding: 1rem;
+    height: 100vh;
+    padding-top: calc(56px + 1rem);
+    padding-bottom: calc(64px + 1rem);
+  }
+}
+
+/* ─────────────────────────────────────────
+   ANIMATIONS
+───────────────────────────────────────── */
 @keyframes fade {
   from { opacity: 0.4; transform: scale(1.02); }
   to   { opacity: 1;   transform: scale(1); }

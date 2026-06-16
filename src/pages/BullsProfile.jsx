@@ -9,7 +9,7 @@ import {
 /* ─── Modal shell ─── */
 function Modal({ title, onClose, children, wide = false }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center">
       <div className={`bg-white rounded-2xl shadow-2xl w-full ${wide ? "max-w-4xl" : "max-w-lg"} max-h-[92vh] overflow-y-auto`}>
         <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
           <h3 className="text-lg font-bold text-green-900">{title}</h3>
@@ -206,7 +206,7 @@ export default function BullsProfile() {
     <div className="bg-green-50 flex flex-col">
 
       {/* TOP BAR */}
-      <div className="flex items-center gap-4 px-6 py-4 bg-white shadow-sm">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-white shadow-sm flex-wrap">
         <button onClick={() => navigate(-1)}
           className="bg-white shadow w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -214,20 +214,20 @@ export default function BullsProfile() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
         </button>
-        <h2 className="text-2xl font-bold text-green-900">Bull Profile</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-green-900">Bull Profile</h2>
         <span className={`ml-auto text-xs font-semibold px-3 py-1 rounded-full ${statusColor}`}>
           {bull.status || "Unknown"}
         </span>
       </div>
 
       {/* BODY */}
-      <div className="flex flex-1 gap-6 p-6 flex-wrap lg:flex-nowrap">
+      <div className="flex flex-1 gap-6 p-4 sm:p-6 flex-col lg:flex-row">
 
         {/* LEFT COLUMN */}
-        <div className="flex flex-col gap-4 w-72 shrink-0">
+        <div className="flex flex-col gap-4 w-full lg:w-72 lg:shrink-0">
 
           {/* IMAGE */}
-          <div className="relative h-72 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
+          <div className="relative h-56 sm:h-72 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
             {bull.image
               ? <img src={bull.image} alt={bull.name} className="w-full h-full object-cover" />
               : <div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>
@@ -296,8 +296,8 @@ export default function BullsProfile() {
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Name</p>
                 {isEditing
                   ? <input value={editedBull.name || ""} onChange={(e) => updateField("name", e.target.value)}
-                      className="text-2xl font-bold border-b border-green-400 outline-none w-full" />
-                  : <h3 className="text-2xl font-bold text-green-900">{bull.name}</h3>
+                      className="text-xl sm:text-2xl font-bold border-b border-green-400 outline-none w-full" />
+                  : <h3 className="text-xl sm:text-2xl font-bold text-green-900">{bull.name}</h3>
                 }
               </div>
               {!isEditing
@@ -320,14 +320,14 @@ export default function BullsProfile() {
           </div>
 
           {/* ACTION CARDS */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
 
             {/* GROWTH */}
             <div className="bg-white rounded-2xl shadow p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-400 uppercase font-semibold">Growth Records</p>
-                  <p className="text-2xl font-bold text-green-800 mt-0.5">{growthRecords.length}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-800 mt-0.5">{growthRecords.length}</p>
                 </div>
                 <div className="bg-blue-50 rounded-xl p-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#2563eb" className="w-6 h-6">
@@ -353,7 +353,7 @@ export default function BullsProfile() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-400 uppercase font-semibold">Feed Records</p>
-                  <p className="text-2xl font-bold text-amber-700 mt-0.5">{feedRecords.length}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-amber-700 mt-0.5">{feedRecords.length}</p>
                 </div>
                 <div className="bg-amber-50 rounded-xl p-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#d97706" className="w-6 h-6">
@@ -375,7 +375,7 @@ export default function BullsProfile() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-400 uppercase font-semibold">Medical Log</p>
-                  <p className="text-2xl font-bold text-red-700 mt-0.5">{medicalLog.length}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-red-700 mt-0.5">{medicalLog.length}</p>
                 </div>
                 <div className="bg-red-50 rounded-xl p-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#dc2626" className="w-6 h-6">

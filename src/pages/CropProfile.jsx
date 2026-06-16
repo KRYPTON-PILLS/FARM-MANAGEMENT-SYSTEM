@@ -17,8 +17,8 @@ const Field = ({ label, children }) => (
 
 function Modal({ title, onClose, children, wide = false }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className={`bg-white rounded-2xl shadow-2xl w-full ${wide ? "max-w-2xl" : "max-w-lg"} max-h-[92vh] overflow-y-auto`}>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center">
+      <div className={`bg-white w-full sm:${wide ? 'max-w-2xl' : 'max-w-lg'} rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto`}>
         <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
           <h3 className="text-lg font-bold text-green-900">{title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
@@ -186,7 +186,7 @@ export default function CropProfile() {
     <div className="bg-green-50 flex flex-col min-h-full">
 
       {/* TOP BAR */}
-      <div className="flex items-center gap-4 px-6 py-4 bg-white shadow-sm sticky top-0 z-30">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-white shadow-sm sticky top-0 z-30 flex-wrap">
         <button onClick={() => navigate(-1)}
           className="bg-white shadow w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-green-700">
@@ -197,7 +197,7 @@ export default function CropProfile() {
           <h2 className="text-xl font-bold text-green-900">{crop.name}</h2>
           {crop.variety && <p className="text-xs text-gray-400">{crop.variety}</p>}
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
           {crop.fieldName && <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">📍 {crop.fieldName}</span>}
           <span className={`text-xs font-semibold px-3 py-1 rounded-full text-white ${cfg.color || "bg-gray-400"}`}>{crop.status}</span>
           {nearHarvest && <span className="text-xs font-semibold px-3 py-1 rounded-full bg-lime-500 text-white">{dtu === 0 ? "Harvest today!" : `${dtu}d to harvest`}</span>}
@@ -205,8 +205,8 @@ export default function CropProfile() {
       </div>
 
       {/* TAB BAR */}
-      <div className="bg-white border-b px-6 overflow-x-auto sticky top-[69px] z-20">
-        <div className="flex gap-1 min-w-max">
+      <div className="bg-white border-b px-4 sm:px-6 overflow-x-auto sticky top-[57px] sm:top-[69px] z-20">
+        <div className="flex gap-0.5 sm:gap-1 min-w-max">
           {TABS.map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition ${
@@ -221,11 +221,11 @@ export default function CropProfile() {
       </div>
 
       {/* TAB CONTENT */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-4 sm:p-6">
 
         {/* ══════════ OVERVIEW ══════════ */}
         {activeTab === "Overview" && (
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* image */}
             <div className="lg:col-span-1">
               <div className="relative h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group mb-4">
@@ -272,7 +272,7 @@ export default function CropProfile() {
                       </div>}
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* status */}
                   <div>
                     <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Status</p>
@@ -344,7 +344,7 @@ export default function CropProfile() {
             {/* reports grid */}
             {growthReports.length === 0
               ? <div className="text-center py-16 text-gray-400"><p className="text-4xl mb-3">📸</p><p>No growth reports yet.</p></div>
-              : <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[...growthReports].reverse().map((r, i) => (
                     <div key={r.id} className="bg-white rounded-2xl shadow overflow-hidden">
                       {r.photo
@@ -412,7 +412,7 @@ export default function CropProfile() {
             </div>
             {diseases.length === 0
               ? <div className="text-center py-16 text-gray-400"><p className="text-4xl mb-3">🐛</p><p>No disease records yet.</p></div>
-              : <div className="grid md:grid-cols-2 gap-4">
+              : <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[...diseases].reverse().map((d) => (
                     <div key={d.id} className="bg-white rounded-2xl shadow overflow-hidden">
                       {d.image && <img src={d.image} alt={d.name} className="w-full h-40 object-cover" />}
@@ -456,7 +456,7 @@ export default function CropProfile() {
             {expenseByCategory.length > 1 && (
               <div className="bg-white rounded-2xl shadow p-5">
                 <p className="text-sm font-semibold text-gray-600 mb-3">Expense breakdown</p>
-                <div className="flex flex-wrap gap-6 items-center">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-6 items-start sm:items-center">
                   <ResponsiveContainer width={200} height={200}>
                     <PieChart>
                       <Pie data={expenseByCategory} dataKey="amount" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
@@ -506,7 +506,7 @@ export default function CropProfile() {
               <button onClick={() => setModal("addHarvest")} className="bg-teal-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-teal-700 transition">+ Record Harvest</button>
             </div>
             {totalRevenue > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 {[
                   { l:"Total Yield",    v:`${totalYield.toLocaleString()} ${harvestRecords[0]?.unit || ""}`, c:"text-teal-700" },
                   { l:"Total Revenue",  v:`KES ${totalRevenue.toLocaleString()}`,  c:"text-green-700" },
@@ -521,7 +521,7 @@ export default function CropProfile() {
               </div>
             )}
             {costPerUnit && pricePerUnit && (
-              <div className="bg-white rounded-2xl shadow p-5 grid md:grid-cols-3 gap-4 text-center">
+              <div className="bg-white rounded-2xl shadow p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                 <div><p className="text-xs text-gray-400 uppercase font-semibold mb-1">Cost per unit</p><p className="text-xl font-bold text-red-600">KES {costPerUnit}</p></div>
                 <div><p className="text-xs text-gray-400 uppercase font-semibold mb-1">Revenue per unit</p><p className="text-xl font-bold text-green-700">KES {pricePerUnit}</p></div>
                 <div><p className="text-xs text-gray-400 uppercase font-semibold mb-1">Profit per unit</p><p className={`text-xl font-bold ${(pricePerUnit - costPerUnit) >= 0 ? "text-green-700" : "text-red-600"}`}>KES {(pricePerUnit - costPerUnit).toFixed(2)}</p></div>

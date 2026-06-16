@@ -143,7 +143,7 @@ export default function UserProfile() {
     <div className="bg-green-50 min-h-full">
 
       {/* ── TOP BAR ── */}
-      <div className="flex items-center gap-4 px-6 py-4 bg-white shadow-sm sticky top-0 z-20">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-white shadow-sm sticky top-0 z-20 flex-wrap">
         <button
           onClick={() => navigate(-1)}
           className="bg-white shadow w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition"
@@ -152,9 +152,9 @@ export default function UserProfile() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
           </svg>
         </button>
-        <h2 className="text-2xl font-bold text-green-900">My Profile</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-green-900">My Profile</h2>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
           {saved && (
             <span className="text-green-600 text-sm font-semibold flex items-center gap-1 animate-pulse">
               ✅ Saved
@@ -165,14 +165,14 @@ export default function UserProfile() {
             <>
               <button
                 onClick={handleCancel}
-                className="border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-semibold px-5 py-2 rounded-xl text-sm transition"
+                className="border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-semibold px-3 sm:px-5 py-2 rounded-xl text-sm transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold px-5 py-2 rounded-xl text-sm transition"
+                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold px-3 sm:px-5 py-2 rounded-xl text-sm transition"
               >
                 {saving ? "Saving…" : "Save Changes"}
               </button>
@@ -180,7 +180,7 @@ export default function UserProfile() {
           ) : (
             <button
               onClick={() => setEditing(true)}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2 rounded-xl text-sm transition flex items-center gap-2"
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 sm:px-5 py-2 rounded-xl text-sm transition flex items-center gap-2"
             >
               ✏️ Edit Profile
             </button>
@@ -188,16 +188,16 @@ export default function UserProfile() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
 
         {/* ── PROFILE HEADER CARD ── */}
-        <div className="bg-white rounded-2xl shadow p-6 flex flex-wrap items-center gap-6">
+        <div className="bg-white rounded-2xl shadow p-4 sm:p-6 flex flex-wrap items-center gap-4 sm:gap-6">
           {/* Avatar */}
           <div className="relative shrink-0">
-            <div className="w-24 h-24 rounded-2xl overflow-hidden bg-green-100 flex items-center justify-center shadow-md">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-green-100 flex items-center justify-center shadow-md">
               {form.photoURL
                 ? <img src={form.photoURL} alt="Profile" className="w-full h-full object-cover"/>
-                : <span className="text-3xl font-bold text-green-700">{initials}</span>}
+                : <span className="text-2xl sm:text-3xl font-bold text-green-700">{initials}</span>}
             </div>
             {editing && (
               <button
@@ -214,7 +214,7 @@ export default function UserProfile() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-gray-900">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">
               {form.displayName || <span className="text-gray-400 font-normal italic">No name set</span>}
             </h3>
             <p className="text-sm text-gray-500 mt-0.5">{user?.email}</p>
@@ -229,7 +229,7 @@ export default function UserProfile() {
           </div>
 
           {user?.metadata?.creationTime && (
-            <div className="text-right shrink-0">
+            <div className="text-left sm:text-right shrink-0">
               <p className="text-xs text-gray-400 uppercase font-semibold">Member since</p>
               <p className="text-sm font-bold text-gray-700 mt-0.5">
                 {new Date(user.metadata.creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
@@ -245,7 +245,7 @@ export default function UserProfile() {
           </div>
         )}
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
           {/* ── PERSONAL INFORMATION ── */}
           <Section title="Personal Information" icon="👤">
@@ -315,7 +315,7 @@ export default function UserProfile() {
 
         {/* ── ACCOUNT & SECURITY ── */}
         <Section title="Account & Security" icon="🔐">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
             {/* Change password */}
             <div className="bg-gray-50 rounded-xl p-4">
@@ -374,7 +374,7 @@ export default function UserProfile() {
         </Section>
 
         {/* Account info */}
-        <div className="bg-white rounded-2xl shadow p-5 flex flex-wrap gap-6 text-sm text-gray-500">
+        <div className="bg-white rounded-2xl shadow p-4 sm:p-5 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 text-sm text-gray-500">
           <div><span className="font-semibold text-gray-700">User ID: </span><span className="font-mono text-xs">{user?.uid}</span></div>
           {user?.metadata?.creationTime && <div><span className="font-semibold text-gray-700">Account created: </span>{new Date(user.metadata.creationTime).toLocaleDateString()}</div>}
           {user?.metadata?.lastSignInTime && <div><span className="font-semibold text-gray-700">Last sign in: </span>{new Date(user.metadata.lastSignInTime).toLocaleDateString()}</div>}

@@ -69,11 +69,11 @@ export default function EwesProfile() {
   return (
     <div className="bg-rose-50 flex flex-col">
       {/* TOP BAR */}
-      <div className="flex items-center gap-4 px-6 py-4 bg-white shadow-sm">
+      <div className="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-white shadow-sm flex-wrap">
         <button onClick={()=>navigate(-1)} className="bg-white shadow w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-rose-700"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
         </button>
-        <h2 className="text-2xl font-bold text-rose-900">Ewe Profile</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-rose-900">Ewe Profile</h2>
         <div className="ml-auto flex items-center gap-2">
           <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor}`}>{ewe.status}</span>
           <span className={`text-xs font-semibold px-3 py-1 rounded-full text-white ${pColor}`}>{ewe.pregnancyStatus||"Open"}</span>
@@ -87,10 +87,10 @@ export default function EwesProfile() {
         </div>
       )}
 
-      <div className="flex flex-1 gap-6 p-6 flex-wrap lg:flex-nowrap">
+      <div className="flex flex-1 gap-6 p-4 sm:p-6 flex-col lg:flex-row">
         {/* LEFT */}
-        <div className="flex flex-col gap-4 w-72 shrink-0">
-          <div className="relative h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
+        <div className="flex flex-col gap-4 w-full lg:w-72 lg:shrink-0">
+          <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
             {ewe.image?<img src={ewe.image} alt={ewe.name} className="w-full h-full object-cover"/>:<div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>}
             <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer"><span className="opacity-0 group-hover:opacity-100 bg-white/90 text-rose-800 text-xs font-semibold px-3 py-1 rounded-full transition">Change photo</span><input type="file" accept="image/*" className="hidden" onChange={imgUp}/></label>
           </div>
@@ -131,7 +131,7 @@ export default function EwesProfile() {
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Name</p>
-                {isEditing?<input value={edited.name||""} onChange={(e)=>uf("name",e.target.value)} className="text-2xl font-bold border-b border-rose-400 outline-none w-full"/>:<h3 className="text-2xl font-bold text-rose-900">{ewe.name}</h3>}
+                {isEditing?<input value={edited.name||""} onChange={(e)=>uf("name",e.target.value)} className="text-xl sm:text-2xl font-bold border-b border-rose-400 outline-none w-full"/>:<h3 className="text-xl sm:text-2xl font-bold text-rose-900">{ewe.name}</h3>}
               </div>
               {!isEditing?<button onClick={startEdit} className="bg-rose-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-rose-700 transition">Edit Profile</button>:<div className="flex gap-2"><button onClick={saveEdit} className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm">Save</button><button onClick={cancelEdit} className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm">Cancel</button></div>}
             </div>
@@ -142,7 +142,7 @@ export default function EwesProfile() {
           </div>
 
           {/* 7 ACTION CARDS */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <ActionCard title="Growth" count={gr.length} accent="rose" latest={gr.length>0?`${gr.at(-1).weight||"—"} kg`:null} latestDate={gr.at(-1)?.date} onAdd={()=>setModal("growth")} onView={()=>setModal("viewGrowth")} iconPath="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
             <ActionCard title="Wool / Shearing" count={wr.length} accent="teal" latest={wr.length>0?`${wr.at(-1).fleeceWeight||"—"} kg`:null} latestDate={wr.at(-1)?.date} onAdd={()=>setModal("wool")} onView={()=>setModal("viewWool")} iconPath="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/>
             <ActionCard title="Drenching" count={dr.length} accent="amber" latest={dr.length>0?dr.at(-1).product:null} latestDate={dr.at(-1)?.date} onAdd={()=>setModal("drench")} onView={()=>setModal("viewDrench")} iconPath="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8.293 10.5h7.414M15 12.75a3 3 0 11-6 0 3 3 0 016 0z"/>
