@@ -19,7 +19,7 @@ import {
   serverTimestamp,
   onSnapshot,
 } from "firebase/firestore";
-import { auth, db } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig.js";
 
 // ─────────────────────────────────────────────
 // INTERNAL HELPERS
@@ -141,6 +141,48 @@ export const saveFarmState = async (state) => {
 };
 
 // ─────────────────────────────────────────────
+
+
+// ─────────────────────────────
+// COVER IMAGES
+// Stored at /users/{uid}/coverImages/{categoryKey}
+// so they persist independently of the animals array
+// ─────────────────────────────
+
+/**
+ * Save a cover image URL for a category (e.g. "calves", "bulls").
+ * Call this right after a successful Firebase Storage upload.
+ */
+export const saveCoverImage = async (categoryKey, downloadURL) => {
+  const uid = getUid();
+  const ref = doc(db, "users", uid, "coverImages", categoryKey);
+  await setDoc(ref, {
+    categoryKey,
+    coverImage: downloadURL,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+/**
+ * Load all saved cover image URLs for the current user.
+ * Returns an object like: { calves: "https://...", bulls: "https://..." }
+ */
+export const loadCoverImages = async () => {
+  const uid = getUid();
+  try {
+    const snap = await getDocs(userCol(uid, "coverImages"));
+    const result = {};
+    snap.docs.forEach((d) => {
+      result[d.id] = d.data().coverImage;
+    });
+    return result;
+  } catch {
+    return {};
+  }
+};
+
+// ─────────────────────────────
+// GENERIC CRUD
 // GENERIC CRUD  (used by individual page components)
 // ─────────────────────────────────────────────
 

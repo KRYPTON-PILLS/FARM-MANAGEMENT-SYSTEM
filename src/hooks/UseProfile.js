@@ -12,6 +12,7 @@ import { useState, useCallback, useEffect } from "react";
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebaseConfig.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { getDoc } from "firebase/firestore";
 
 const DEFAULTS = {
   displayName: "",
