@@ -1,7 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { UseProfile } from "../hooks/UseProfile.js";
+
+
+
 
 const FARM_TYPES  = ["Mixed","Livestock Only","Crops Only","Dairy","Poultry","Aquaculture"];
 const SIZE_UNITS  = ["Acres","Hectares","Square Metres"];
@@ -76,8 +79,11 @@ function ReadOnlyValue({ value, placeholder = "—" }) {
 
 export default function UserProfile() {
   const navigate = useNavigate();
-  const { user, logout, resetPassword, firebaseAvailable } = useAuth();
+  const { currentUser, logout, resetPassword, firebaseAvailable } = useAuth();
   const { profile, updateProfile } = UseProfile();
+  useEffect(() => {
+  console.log("Profile changed:", profile);
+}, [profile]);
 
   const [editing,      setEditing]      = useState(false);
   const [saving,       setSaving]       = useState(false);
@@ -89,6 +95,9 @@ export default function UserProfile() {
 
   /* local edit state — starts from stored profile */
   const [form, setForm] = useState({ ...profile });
+  useEffect(() => {
+    setForm({ ...profile });
+  }, [profile]);
   const fileRef = useRef();
 
   const uf = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -103,15 +112,19 @@ export default function UserProfile() {
   };
 
   /* ── save ── */
-  const handleSave = () => {
-    setSaving(true);
-    updateProfile(form);
-    setTimeout(() => {
-      setSaving(false);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+
+      await updateProfile(form);
+
       setSaved(true);
       setEditing(false);
-    }, 400);
-    setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   /* ── cancel edit ── */
@@ -122,10 +135,10 @@ export default function UserProfile() {
 
   /* ── change password ── */
   const handleResetPassword = async () => {
-    if (!firebaseAvailable || !user?.email) return;
+    if (!firebaseAvailable || !currentUser?.email) return;
     setResetError(""); setResetLoading(true);
     try {
-      await resetPassword(user.email);
+      await resetPassword(currentUser.email);
       setResetSent(true);
     } catch (err) {
       setResetError(err.message || "Failed to send reset email.");
@@ -137,7 +150,7 @@ export default function UserProfile() {
   /* ── avatar initials ── */
   const initials = form.displayName
     ? form.displayName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
-    : user?.email?.[0]?.toUpperCase() || "F";
+    : currentUser?.email?.[0]?.toUpperCase() || "F";
 
   return (
     <div className="bg-green-50 min-h-full">
@@ -217,7 +230,7 @@ export default function UserProfile() {
             <h3 className="text-lg sm:text-xl font-bold text-gray-900">
               {form.displayName || <span className="text-gray-400 font-normal italic">No name set</span>}
             </h3>
-            <p className="text-sm text-gray-500 mt-0.5">{user?.email}</p>
+            <p className="text-sm text-gray-500 mt-0.5">{currentUser?.email}</p>
             {form.farmName && (
               <p className="text-sm text-green-700 font-semibold mt-1">🌿 {form.farmName}</p>
             )}
@@ -228,11 +241,11 @@ export default function UserProfile() {
             )}
           </div>
 
-          {user?.metadata?.creationTime && (
+          {currentUser?.metadata?.creationTime && (
             <div className="text-left sm:text-right shrink-0">
               <p className="text-xs text-gray-400 uppercase font-semibold">Member since</p>
               <p className="text-sm font-bold text-gray-700 mt-0.5">
-                {new Date(user.metadata.creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                {new Date(currentUser.metadata.creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </p>
             </div>
           )}
@@ -255,7 +268,7 @@ export default function UserProfile() {
                 : <ReadOnlyValue value={form.displayName} placeholder="No name set"/>}
             </Field>
             <Field label="Email Address" hint="Managed by Firebase — cannot be changed here.">
-              <ReadOnlyValue value={user?.email}/>
+              <ReadOnlyValue value={currentUser?.email}/>
             </Field>
             <Field label="Phone Number">
               {editing
@@ -321,7 +334,7 @@ export default function UserProfile() {
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm font-bold text-gray-800 mb-1">Change Password</p>
               <p className="text-xs text-gray-500 mb-3">
-                We'll send a password reset link to <strong>{user?.email}</strong>.
+                We'll send a password reset link to <strong>{currentUser?.email}</strong>.
               </p>
               {resetSent
                 ? <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-green-700 text-xs font-semibold">✅ Reset email sent! Check your inbox.</div>
@@ -375,9 +388,9 @@ export default function UserProfile() {
 
         {/* Account info */}
         <div className="bg-white rounded-2xl shadow p-4 sm:p-5 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 text-sm text-gray-500">
-          <div><span className="font-semibold text-gray-700">User ID: </span><span className="font-mono text-xs">{user?.uid}</span></div>
-          {user?.metadata?.creationTime && <div><span className="font-semibold text-gray-700">Account created: </span>{new Date(user.metadata.creationTime).toLocaleDateString()}</div>}
-          {user?.metadata?.lastSignInTime && <div><span className="font-semibold text-gray-700">Last sign in: </span>{new Date(user.metadata.lastSignInTime).toLocaleDateString()}</div>}
+          <div><span className="font-semibold text-gray-700">User ID: </span><span className="font-mono text-xs">{currentUser?.uid}</span></div>
+          {currentUser?.metadata?.creationTime && <div><span className="font-semibold text-gray-700">Account created: </span>{new Date(currentUser.metadata.creationTime).toLocaleDateString()}</div>}
+          {currentUser?.metadata?.lastSignInTime && <div><span className="font-semibold text-gray-700">Last sign in: </span>{new Date(currentUser.metadata.lastSignInTime).toLocaleDateString()}</div>}
         </div>
 
       </div>

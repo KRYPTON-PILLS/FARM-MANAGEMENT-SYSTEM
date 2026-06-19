@@ -1,56 +1,44 @@
 /**
  * UseProfile.js
  *
- * FIXED: Profile data is now saved to Firestore under
- *   /farms/{uid}/profile/info
- * so it syncs across every device automatically.
+ * Stores profile data in:
+ * /farms/{uid}/profile/info
  *
- * Previously used localStorage — which is device-local
- * and never leaves the browser it was created in.
+ * Uses Firestore realtime listeners so profile updates
+ * appear immediately across devices and browser tabs.
  */
 
 import { useState, useCallback, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebaseConfig.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const DEFAULTS = {
-  displayName:  "",
-  phone:        "",
-  photoURL:     "",
-  farmName:     "",
+  displayName: "",
+  phone: "",
+  photoURL: "",
+  farmName: "",
   farmLocation: "",
-  farmSize:     "",
+  farmSize: "",
   farmSizeUnit: "Acres",
-  farmType:     "Mixed",
-  country:      "Kenya",
-  bio:          "",
+  farmType: "Mixed",
+  country: "Kenya",
+  bio: "",
 };
 
-/* ── Firestore helpers ── */
-async function loadFromFirestore(uid) {
-  try {
-    if (!uid || !db) return { ...DEFAULTS };
-    const ref  = doc(db, "farms", uid, "profile", "info");
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return { ...DEFAULTS };
-    return { ...DEFAULTS, ...snap.data() };
-  } catch (err) {
-    console.error("UseProfile loadFromFirestore error:", err);
-    return { ...DEFAULTS };
-  }
-}
-
+/* ── Firestore helper ── */
 async function saveToFirestore(uid, data) {
   try {
     if (!uid || !db) return;
-    // Strip the photoURL if it's a large base64 string — store it separately
-    // or keep it if it's a remote URL. Base64 avatars can be large but Firestore
-    // allows up to 1MB per document, so it's fine for most profile photos.
+
     const ref = doc(db, "farms", uid, "profile", "info");
-    await setDoc(ref, data, { merge: true });
+
+    await setDoc(ref, data, {
+      merge: true,
+    });
   } catch (err) {
     console.error("UseProfile saveToFirestore error:", err);
+    throw err;
   }
 }
 
@@ -58,42 +46,75 @@ export function UseProfile() {
   const { currentUser } = useAuth();
   const uid = currentUser?.uid ?? null;
 
-  const [profile,    setProfileState] = useState({ ...DEFAULTS });
-  const [loadedUid,  setLoadedUid]    = useState(null);
+  const [profile, setProfileState] = useState({ ...DEFAULTS });
 
-  /* ── Load profile whenever the logged-in user changes ── */
+  /* ── Realtime profile listener ── */
   useEffect(() => {
     if (!uid) {
-      // Logged out — reset to defaults
+      console.log("No uid yet");
       setProfileState({ ...DEFAULTS });
-      setLoadedUid(null);
       return;
     }
 
-    if (uid === loadedUid) return; // already loaded for this user
+    console.log("Listening for profile changes for uid:", uid);
 
-    loadFromFirestore(uid).then((data) => {
-      setProfileState(data);
-      setLoadedUid(uid);
-    });
-  }, [uid, loadedUid]);
+    const ref = doc(db, "farms", uid, "profile", "info");
 
-  /* ── Update profile and persist to Firestore ── */
-  const updateProfile = useCallback((updates) => {
-    setProfileState((prev) => {
-      const next = { ...prev, ...updates };
-      // Fire-and-forget — don't block the UI
-      if (uid) saveToFirestore(uid, next);
+    const unsubscribe = onSnapshot(
+      ref,
+      (snap) => {
+        console.log("Profile snapshot received:",snap.exists(), snap.data());
+        if (snap.exists()) {
+          setProfileState({
+            ...DEFAULTS,
+            ...snap.data(),
+          });
+        } else {
+          setProfileState({ ...DEFAULTS });
+        }
+      },
+      (error) => {
+        console.error("UseProfile snapshot error:", error);
+        setProfileState({ ...DEFAULTS });
+      }
+    );
+
+    return unsubscribe;
+  }, [uid]);
+
+  /* ── Update profile ── */
+  const updateProfile = useCallback(
+    async (updates) => {
+      const next = {
+        ...profile,
+        ...updates,
+      };
+
+      setProfileState(next);
+
+      if (uid) {
+        await saveToFirestore(uid, next);
+      }
+
       return next;
-    });
-  }, [uid]);
+    },
+    [uid, profile]
+  );
 
-  /* ── Reset profile to defaults ── */
-  const resetProfile = useCallback(() => {
+  /* ── Reset profile ── */
+  const resetProfile = useCallback(async () => {
     const fresh = { ...DEFAULTS };
+
     setProfileState(fresh);
-    if (uid) saveToFirestore(uid, fresh);
+
+    if (uid) {
+      await saveToFirestore(uid, fresh);
+    }
   }, [uid]);
 
-  return { profile, updateProfile, resetProfile };
+  return {
+    profile,
+    updateProfile,
+    resetProfile,
+  };
 }
