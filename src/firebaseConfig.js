@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -20,15 +20,8 @@ if (!Object.values(firebaseConfig).every(Boolean)) {
 
 const app = initializeApp(firebaseConfig);
 
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-  }),
-});
-
+export const db = getFirestore(app);
 export const auth = getAuth(app);
-
-// ✅ Firebase Storage — for persisting uploaded images
 export const storage = getStorage(app);
 
 export default app;

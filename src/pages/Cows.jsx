@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
 import { Link, useNavigate } from "react-router-dom";
+import { uploadAnimalPhoto } from "../utils/imageUpload.js";
 
 const PREGNANCY_COLORS = {
   Open:      "bg-gray-500",
@@ -17,35 +18,57 @@ export default function Cows() {
     (a) => a.category === "cattle" && a.type?.toLowerCase() === "cow"
   );
 
-  const [name,  setName]  = useState("");
-  const [age,   setAge]   = useState("");
-  const [image, setImage] = useState("");
+  const [name,           setName]           = useState("");
+  const [age,            setAge]            = useState("");
+  const [image,          setImage]          = useState("");
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
+  /* ── Add cow — image optional ── */
   const addCow = () => {
-    if (!name || !age || !image) return;
+    if (!name || !age) return;
     const newCow = {
-      id:             Date.now(),
-      category:       "cattle",
-      type:           "cow",
+      id:                  Date.now(),
+      category:            "cattle",
+      type:                "cow",
       name,
       age,
-      image,
-      datePurchased:  "",
-      purchasePrice:  "",
-      breed:          "",
-      color:          "",
-      status:         "Healthy",
-      pregnancyStatus: "Open",
-      weight:         "",
-      growthRecords:  [],
-      feedRecords:    [],
-      medicalLog:     [],
+      image,               // Firebase Storage URL (or "" if no photo yet)
+      datePurchased:       "",
+      purchasePrice:       "",
+      breed:               "",
+      color:               "",
+      status:              "Healthy",
+      pregnancyStatus:     "Open",
+      weight:              "",
+      growthRecords:       [],
+      feedRecords:         [],
+      medicalLog:          [],
       reproductiveRecords: [],
       lactationHistory:    [],
       calfHistory:         [],
     };
     setAnimals((prev) => [...prev, newCow]);
-    setName(""); setAge(""); setImage("");
+    setName(""); setAge(""); setImage(""); setUploadProgress(0);
+  };
+
+  /* ── Upload to Firebase Storage ── */
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setImageUploading(true);
+      setUploadProgress(0);
+      const url = await uploadAnimalPhoto(file, "cattle",
+        (pct) => setUploadProgress(pct)
+      );
+      setImage(url); // ← permanent Storage URL, works in <img src> just like base64
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("Image upload failed. You can still add the cow without a photo.");
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   return (
@@ -65,33 +88,59 @@ export default function Cows() {
       {/* ADD FORM */}
       <div className="bg-white border rounded-2xl p-5 flex flex-wrap gap-3 shadow-sm mb-8">
         <input value={name} onChange={(e) => setName(e.target.value)}
-          placeholder="Cow Name"
+          placeholder="Cow Name *"
           className="border p-3 rounded-lg flex-1 min-w-[200px]" />
+
         <input value={age} onChange={(e) => setAge(e.target.value)}
-          type="number" placeholder="Age (yrs)"
+          type="number" placeholder="Age (yrs) *"
           className="border p-3 rounded-lg w-32" />
-        <input type="file" accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onloadend = () => setImage(reader.result);
-            reader.readAsDataURL(file);
-          }}
-          className="border p-3 rounded-lg flex-1 min-w-[220px]" />
-        <button onClick={addCow}
-          className="bg-pink-600 text-white px-5 py-3 rounded-xl hover:bg-pink-700 transition">
+
+        {/* File input + progress */}
+        <div className="flex flex-col gap-1 flex-1 min-w-[220px]">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            disabled={imageUploading}
+            className="border p-3 rounded-lg w-full"
+          />
+          {imageUploading && (
+            <>
+              <p className="text-xs text-pink-600 font-semibold">
+                Uploading photo… {uploadProgress}%
+              </p>
+            </>
+          )}
+          {!imageUploading && image && (
+            <p className="text-xs text-green-600 font-semibold">✅ Photo ready</p>
+          )}
+        </div>
+
+        <button
+          onClick={addCow}
+          disabled={!name || !age}
+          className="bg-pink-600 text-white px-5 py-3 rounded-xl hover:bg-pink-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition">
           Add Cow
         </button>
       </div>
 
-      {/* GRID */}
+      {/* GRID — exactly the same cards as before */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {cows.map((c) => (
           <div key={c.id} className="relative h-80 rounded-3xl overflow-hidden shadow-xl group">
 
-            <img src={c.image || "/images/placeholder.jpg"} alt={c.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+            {/* IMAGE — shows Storage URL or placeholder emoji if no photo */}
+            {c.image ? (
+              <img
+                src={c.image}
+                alt={c.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center">
+                <span className="text-6xl">🐄</span>
+              </div>
+            )}
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
@@ -105,7 +154,7 @@ export default function Cows() {
               {c.pregnancyStatus || "Open"}
             </div>
 
-            {/* milk yield latest — bottom left */}
+            {/* milk yield — bottom left */}
             {c.growthRecords?.length > 0 && c.growthRecords.at(-1).milkYield && (
               <div className="absolute bottom-14 left-3 bg-blue-600/80 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-full">
                 🥛 {c.growthRecords.at(-1).milkYield} L/day
@@ -124,7 +173,11 @@ export default function Cows() {
       </div>
 
       {cows.length === 0 && (
-        <p className="text-gray-500 text-lg mt-4">No cows added yet.</p>
+        <div className="text-center py-16 text-gray-400">
+          <p className="text-5xl mb-3">🐄</p>
+          <p className="text-lg font-semibold">No cows added yet.</p>
+          <p className="text-sm mt-1">Fill in the name and age above to add your first cow.</p>
+        </div>
       )}
     </div>
   );

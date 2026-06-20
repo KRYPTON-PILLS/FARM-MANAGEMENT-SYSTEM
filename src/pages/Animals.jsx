@@ -1,6 +1,9 @@
 import { useContext } from "react";
 import { FarmContext } from "../context/FarmContext";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { uploadCoverImage } from "../utils/imageUpload.js";
+import { saveCoverImage, loadCoverImages } from "../db/farmDB.js";
 
 export default function Animals() {
   const { animals = [], setAnimals } = useContext(FarmContext);
@@ -13,29 +16,37 @@ export default function Animals() {
     { key: "pigs",    name: "Pigs",    image: "/images/pigs.jpg" },
   ];
 
-  /* Upload a cover image per category */
-  const handleImageUpload = (e, categoryKey) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setAnimals((prev) => {
-        const existing = prev.find((a) => a.__coverKey === categoryKey);
-        if (existing) {
-          return prev.map((a) =>
-            a.__coverKey === categoryKey ? { ...a, coverImage: reader.result } : a
-          );
-        }
-        return [...prev, { __coverKey: categoryKey, coverImage: reader.result }];
-      });
-    };
-    reader.readAsDataURL(file);
-  };
+  // Add state at the top of the component:
+const [coverImages,     setCoverImages]     = useState({});
+const [uploadProgress,  setUploadProgress]  = useState({});
 
-  const getCoverImage = (cat) => {
-    const stored = animals.find((a) => a.__coverKey === cat.key);
-    return stored?.coverImage || cat.image;
-  };
+// Load saved covers on mount:
+useEffect(() => {
+  loadCoverImages()
+    .then(setCoverImages)
+    .catch(console.error);
+}, []);
+
+// Replace handleImageUpload:
+const handleImageUpload = async (e, categoryKey) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  try {
+    setUploadProgress((p) => ({ ...p, [categoryKey]: 1 }));
+    const url = await uploadCoverImage(file, categoryKey,
+      (pct) => setUploadProgress((p) => ({ ...p, [categoryKey]: pct }))
+    );
+    await saveCoverImage(categoryKey, url);
+    setCoverImages((p) => ({ ...p, [categoryKey]: url }));
+  } catch (err) {
+    console.error("Upload failed:", err);
+  } finally {
+    setTimeout(() => setUploadProgress((p) => ({ ...p, [categoryKey]: null })), 1200);
+  }
+};
+
+  const getCoverImage = (cat) => coverImages[cat.key] || cat.image;
+
 
   return (
     <div>

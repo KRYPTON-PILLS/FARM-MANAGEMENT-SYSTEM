@@ -6,6 +6,7 @@ import {
   ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
 
+
 /* ─── Modal shell ─── */
 function Modal({ title, onClose, children, wide = false }) {
   return (
@@ -128,13 +129,28 @@ export default function BullsProfile() {
   const updateField   = (f, v) => setEditedBull((p) => ({ ...p, [f]: v }));
 
   /* ── image upload ── */
-  const handleImageUpload = (e) => {
+  const [photoUploading,  setPhotoUploading] = useState(false);
+
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => updateBull({ ...bull, image: reader.result });
-    reader.readAsDataURL(file);
+    try {
+      setPhotoUploading(true);
+      const url = await uploadAnimalPhoto(file, "cattle");
+      updateBull({ ...bull, image: url });
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setPhotoUploading(false);
+    }
   };
+
+  // Show uploading state on the image:
+  {photoUploading && (
+    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+      <span className="text-white text-sm font-semibold">Uploading…</span>
+    </div>
+  )}
 
   /* ── add / delete records ── */
   const addGrowth = () => {

@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
 import { Link, useNavigate } from "react-router-dom";
+import { uploadAnimalPhoto } from "../utils/imageUpload";
 
 const MATURITY_COLORS = {
   Weaning:       "bg-gray-400",
@@ -20,6 +21,7 @@ export default function BullCalves() {
   const [name,  setName]  = useState("");
   const [age,   setAge]   = useState("");
   const [image, setImage] = useState("");
+  const [imageUploading, setImageUploading] = useState(false);
 
   const addBullCalf = () => {
     if (!name || !age || !image) return;
@@ -62,15 +64,26 @@ export default function BullCalves() {
           className="border p-3 rounded-lg flex-1 min-w-[200px]" />
         <input value={age} onChange={(e) => setAge(e.target.value)} type="number" placeholder="Age (months)"
           className="border p-3 rounded-lg w-36" />
-        <input type="file" accept="image/*" onChange={(e) => {
-          const file = e.target.files?.[0]; if (!file) return;
-          const reader = new FileReader();
-          reader.onloadend = () => setImage(reader.result);
-          reader.readAsDataURL(file);
-        }} className="border p-3 rounded-lg flex-1 min-w-[220px]" />
-        <button onClick={addBullCalf}
+
+        {/*IMAGE UPLOAD */}
+        <input type="file" accept="image/*" 
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          try {
+            setImageUploading(true);
+            const url = await uploadAnimalPhoto(file, "cattle");
+            setImage(url);
+          } catch (err) {
+            console.error("Upload failed:", err);
+          } finally {
+            setImageUploading(false);
+          }
+        }}
+        className="border p-3 rounded-lg flex-1 min-w-[220px]" />
+        <button onClick={addBullCalf} disabled={imageUploading}
           className="bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-700 transition">
-          Add Bull Calf
+          {imageUploading ? "Uploading…" : "Add BullCalf"}
         </button>
       </div>
 

@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
 import { Link, useNavigate } from "react-router-dom";
+import { uploadAnimalPhoto } from "../utils/imageUpload";
 
 function ageLabel(birthDate) {
   if (!birthDate) return "—";
@@ -23,6 +24,8 @@ export default function Calves() {
   const [birthDate, setBirthDate] = useState("");
   const [gender,    setGender]    = useState("Female");
   const [image,     setImage]     = useState("");
+  const [imageUploading, setImageUploading]  = useState(false);
+
 
   const addCalf = () => {
     if (!name || !birthDate || !image) return;
@@ -83,17 +86,24 @@ export default function Calves() {
         </div>
 
         <input type="file" accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onloadend = () => setImage(reader.result);
-            reader.readAsDataURL(file);
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            try {
+              setImageUploading(true);
+              const url = await uploadAnimalPhoto(file, "cattle");
+              setImage(url);
+            } catch (err) {
+              console.error("Upload failed:", err);
+            } finally {
+              setImageUploading(false);
+            }
           }}
           className="border p-3 rounded-lg flex-1 min-w-[200px]" />
 
-        <button onClick={addCalf}
+        <button onClick={addCalf} disabled={imageUploading}
           className="bg-orange-500 text-white px-5 py-3 rounded-xl hover:bg-orange-600 transition">
-          Add Calf
+          {imageUploading ? "Uploading…" : "Add Calf"}
         </button>
       </div>
 

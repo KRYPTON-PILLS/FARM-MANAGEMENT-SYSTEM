@@ -126,7 +126,6 @@ export default function Dashboard() {
 
   return (
     <div className="bg-green-50 min-h-full p-4 sm:p-6 space-y-4 sm:space-y-6">
-
       {/* ── Greeting banner ── */}
       <div className="bg-gradient-to-r from-green-700 to-emerald-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg">
         <p className="text-green-200 text-sm font-semibold">{greeting},</p>
