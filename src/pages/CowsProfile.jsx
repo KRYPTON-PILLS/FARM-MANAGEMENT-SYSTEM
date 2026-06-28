@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
+import SellAnimalModal from "../components/SellAnimalModal";
+import { uploadAnimalPhoto } from "../utils/imageUpload";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
@@ -107,6 +109,7 @@ export default function CowsProfile() {
 
   /* ── modals ── */
   const [modal, setModal] = useState(null);
+  const [showSellModal, setShowSellModal] = useState(false);
   // values: "growth"|"viewGrowth"|"feed"|"viewFeed"|"medical"|"viewMedical"
   //         "repro"|"viewRepro"|"lactation"|"viewLactation"|"calf"|"viewCalves"
 
@@ -145,13 +148,32 @@ export default function CowsProfile() {
   const current       = isEditing ? editedCow : cow;
 
   /* ── image upload ── */
-  const handleImageUpload = (e) => {
+  const [photoUploading,  setPhotoUploading] = useState(false);
+  
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => updateCow({ ...cow, image: reader.result });
-    reader.readAsDataURL(file);
+    try {
+      setPhotoUploading(true);
+      const url = await uploadAnimalPhoto(file, "cattle");
+      updateCow({ ...cow, image: url });
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setPhotoUploading(false);
+    }
   };
+  
+  
+  /* ── Status change — intercept "Sold" to show sell modal ── */
+  const handleStatusChange = (newStatus) => {
+    if (newStatus === "Sold") {
+      setShowSellModal(true);
+    } else {
+      updateField("status", newStatus);
+    }
+  };
+  
 
   /* ── add/delete growth ── */
   const addGrowth = () => {
@@ -348,6 +370,22 @@ export default function CowsProfile() {
               )}
             </div>
           </div>
+
+          {/* ── SELL BUTTON ── */}
+          {cow.status !== "Sold" && (
+            <button
+              onClick={() => setShowSellModal(true)}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition shadow text-sm flex items-center justify-center gap-2"
+            >
+              💰 Sell this Cow
+            </button>
+          )}
+
+          {cow.status === "Sold" && (
+            <div className="bg-gray-100 rounded-xl px-4 py-3 text-center text-sm text-gray-500 font-semibold">
+              ✅ This cow has been sold
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN */}
@@ -374,10 +412,19 @@ export default function CowsProfile() {
               <div className="mt-4 flex gap-4 flex-wrap">
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Health Status</p>
-                  <select value={editedCow.status || ""} onChange={(e) => updateField("status", e.target.value)}
-                    className="border rounded-lg px-3 py-2 text-sm">
+                  <select 
+                    value={editedCow.status || ""} 
+                    onChange={(e) => updateField("status", e.target.value)}
+                    className="border rounded-lg px-3 py-2 text-sm"
+                  >
+
                     {["Healthy","Sick","Under Treatment","Sold"].map((s) => <option key={s}>{s}</option>)}
                   </select>
+                  {editedCow.status !== "Sold" && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Select "Sold" to record a sale - a form will appear to capture the <details className=""></details>
+                    </p>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Pregnancy Status</p>
@@ -553,6 +600,23 @@ export default function CowsProfile() {
           )}
         </div>
       </div>
+
+      {/* ══ SELL ANIMAL MODAL ══ */}
+      {showSellModal && (
+        <SellAnimalModal
+          animal={cow}
+          species="Cattle"
+          onConfirm={() => {      
+            updateCow({ ...cow, status: "Sold" });
+            setShowSellModal(false);
+            if (isEditing) { setIsEditing(false); setEditedCow(null); }
+          }}
+          onCancel={() => {
+            setShowSellModal(false);
+            if (isEditing && editedCow) updateField("status", cow.status);
+          }}
+        />
+      )}            
 
       {/* ══════════════ MODALS ══════════════ */}
 

@@ -3,6 +3,8 @@ import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
 import { Modal, Field, BCSPicker, BCSBadge, ActionCard, GrowthTable } from "../components/SheepHelpers";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import SellAnimalModal from "../components/SellAnimalModal";
+import { uploadAnimalPhoto } from "../utils/imageUpload";
 
 function ageStr(birthDate) {
   if (!birthDate) return "—";
@@ -37,6 +39,8 @@ export default function LambProfile() {
   const update = (u) => setAnimals((p)=>p.map((a)=>a.id?.toString()===id?u:a));
   const [isEditing,setIsEditing]=useState(false); const [edited,setEdited]=useState(null);
   const [modal,setModal]=useState(null);
+  const [showSellModal, setShowSellModal] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [gradModal,setGradModal]=useState(false);
 
   const [newCol,setNewCol]=useState({timeAfterBirth:"",amount:"",source:"Dam",notes:""});
@@ -53,7 +57,21 @@ export default function LambProfile() {
   const startEdit=()=>{setIsEditing(true);setEdited({...lamb});}; const cancelEdit=()=>{setIsEditing(false);setEdited(null);};
   const saveEdit=()=>{update(edited);setIsEditing(false);setEdited(null);};
   const uf=(f,v)=>setEdited((p)=>({...p,[f]:v}));
-  const imgUp=(e)=>{ const f=e.target.files?.[0]; if(!f) return; const r=new FileReader(); r.onloadend=()=>update({...lamb,image:r.result}); r.readAsDataURL(f); };
+
+  /* ── image upload (cloud) ── */
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setPhotoUploading(true);
+      const url = await uploadAnimalPhoto(file, "sheep");
+      update({ ...lamb, image: url });
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
 
   const saveCol=()=>{ if(!newCol.timeAfterBirth) return; update({...lamb,colostrumRecord:{...newCol,savedAt:new Date().toISOString()}}); setModal(null); };
   const addGrowth=()=>{ if(!newGrowth.date) return; const u=[...growthRecords,{...newGrowth,id:Date.now()}]; update({...lamb,growthRecords:u}); setNewGrowth({date:"",weight:"",bcs:0,notes:""}); setModal("viewGrowth"); };
@@ -94,8 +112,10 @@ export default function LambProfile() {
           <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
             {lamb.image?<img src={lamb.image} alt={lamb.name} className="w-full h-full object-cover"/>:<div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>}
             <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer">
-              <span className="opacity-0 group-hover:opacity-100 bg-white/90 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full transition">Change photo</span>
-              <input type="file" accept="image/*" className="hidden" onChange={imgUp}/>
+              <span className="opacity-0 group-hover:opacity-100 bg-white/90 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full transition">
+                {photoUploading ? "Uploading…" : "Change photo"}
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload}/>
             </label>
           </div>
           <div className="bg-white rounded-2xl shadow p-4 text-sm space-y-2">
@@ -136,6 +156,21 @@ export default function LambProfile() {
             {isEditing?<div className="flex justify-between items-center"><span className="text-gray-500 text-xs">Target date</span><input type="date" value={edited.weaningTargetDate||""} onChange={(e)=>uf("weaningTargetDate",e.target.value)} className="border rounded px-2 py-0.5 text-sm"/></div>:<WeaningBar birthDate={lamb.birthDate} targetDate={lamb.weaningTargetDate}/>}
             {!isEditing&&!lamb.weaningTargetDate&&<p className="text-gray-300 text-xs">Set a weaning date in Edit Profile</p>}
           </div>
+
+          {/* ── SELL BUTTON ── */}
+          {lamb.status !== "Sold" && (
+            <button
+              onClick={() => setShowSellModal(true)}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition shadow text-sm flex items-center justify-center gap-2"
+            >
+              💰 Sell this Lamb
+            </button>
+          )}
+          {lamb.status === "Sold" && (
+            <div className="bg-gray-100 rounded-xl px-4 py-3 text-center text-sm text-gray-500 font-semibold">
+              ✅ This lamb has been sold
+            </div>
+          )}
         </div>
 
         {/* RIGHT */}
@@ -166,6 +201,23 @@ export default function LambProfile() {
           <GrowthTable records={growthRecords} onDelete={delGrowth} accentHover="hover:bg-amber-50/40"/>
         </div>
       </div>
+
+      {/* ══ SELL ANIMAL MODAL ══ */}
+      {showSellModal && (
+        <SellAnimalModal
+          animal={lamb}
+          species="Sheep"
+          onConfirm={() => {
+            update({ ...lamb, status: "Sold" });
+            setShowSellModal(false);
+            if (isEditing) { setIsEditing(false); setEdited(null); }
+          }}
+          onCancel={() => {
+            setShowSellModal(false);
+            if (isEditing) uf("status", lamb.status);
+          }}
+        />
+      )}
 
       {/* MODALS */}
       {modal==="colostrum"&&<Modal title="Record Colostrum Feeding" onClose={()=>setModal(null)}><div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs text-amber-800">🍼 Colostrum is critical in the first 6 hours — provides passive immunity to the lamb.</div><Field label="Hours after birth"><input type="number" step="0.5" placeholder="e.g. 2" value={newCol.timeAfterBirth} onChange={(e)=>setNewCol({...newCol,timeAfterBirth:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="Amount (mL)"><input type="number" placeholder="e.g. 200" value={newCol.amount} onChange={(e)=>setNewCol({...newCol,amount:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="Source"><div className="flex gap-2 flex-wrap">{["Ewe (Dam)","Donor Ewe","Frozen","Artificial"].map((s)=><button key={s} type="button" onClick={()=>setNewCol({...newCol,source:s})} className={`flex-1 py-2 rounded-xl border text-xs font-semibold transition ${newCol.source===s?"bg-amber-500 text-white border-transparent":"bg-gray-50 border-gray-200 hover:border-gray-400"}`}>{s}</button>)}</div></Field><Field label="Notes"><textarea value={newCol.notes} onChange={(e)=>setNewCol({...newCol,notes:e.target.value})} className="border rounded-lg p-2 w-full h-16 resize-none"/></Field><div className="flex gap-3 pt-2"><button onClick={saveCol} className="flex-1 bg-amber-500 text-white py-2 rounded-xl hover:bg-amber-600 font-semibold">Save Record</button><button onClick={()=>setModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-xl">Cancel</button></div></Modal>}

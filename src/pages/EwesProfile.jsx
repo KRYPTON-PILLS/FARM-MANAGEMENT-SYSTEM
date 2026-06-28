@@ -3,6 +3,9 @@ import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
 import { Modal, Field, BCSPicker, BCSBadge, FAMACHAPicker, FAMACHABadge, ActionCard, GrowthTable } from "../components/SheepHelpers";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, BarChart, Bar } from "recharts";
+import SellAnimalModal from "../components/SellAnimalModal";
+import { uploadAnimalPhoto } from "../utils/imageUpload";
+
 
 const PREGNANCY_STATUSES = ["Open","Pregnant","Lactating","Dry"];
 const P_COLORS = { Open:"bg-gray-400", Pregnant:"bg-rose-500", Lactating:"bg-blue-500", Dry:"bg-amber-500" };
@@ -16,10 +19,20 @@ export default function EwesProfile() {
   const { id } = useParams(); const navigate = useNavigate();
   const { animals=[], setAnimals } = useContext(FarmContext);
   const ewe = animals.find((a)=>a.id?.toString()===id&&a.category==="sheep"&&a.type?.toLowerCase()==="ewe");
-  const upd = (u)=>setAnimals((p)=>p.map((a)=>a.id?.toString()===id?u:a));
+  
+  const updatedEwe = (eweData)=>
+    setAnimals((p)=>
+      p.map((a)=>
+        a.id?.toString()===id? eweData : a
+      )
+    );
+
+  // Short alias used by all record-add helpers and del()
+  const upd = updatedEwe;
 
   const [isEditing,setIsEditing]=useState(false); const [edited,setEdited]=useState(null);
   const [modal,setModal]=useState(null);
+  const [showSellModal, setShowSellModal] = useState(false);
 
   const [newGrowth,setNewGrowth]=useState({date:"",weight:"",bcs:0,price:"",notes:""});
   const [newFeed,setNewFeed]=useState({date:"",feedType:"",amount:"",minerals:"",lactationDiet:"",notes:""});
@@ -31,18 +44,48 @@ export default function EwesProfile() {
 
   if (!ewe) return <p className="p-6 text-red-600">Ewe not found.</p>;
 
-  const gr=ewe.growthRecords||[]; const fr=ewe.feedRecords||[]; const ml=ewe.medicalLog||[];
-  const dr=ewe.drenchingRecords||[]; const wr=ewe.woolRecords||[];
-  const tr=ewe.tuppingRecords||[]; const lr=ewe.lambingRecords||[];
+  const gr=ewe.growthRecords||[]; 
+  const fr=ewe.feedRecords||[]; 
+  const ml=ewe.medicalLog||[];
+  const dr=ewe.drenchingRecords||[]; 
+  const wr=ewe.woolRecords||[];
+  const tr=ewe.tuppingRecords||[]; 
+  const lr=ewe.lambingRecords||[];
 
   const rams=animals.filter((a)=>a.category==="sheep"&&a.type?.toLowerCase()==="ram");
   const latestTupping=tr.at(-1);
   const daysToLambing=latestTupping?.expectedLambing&&!latestTupping.lambingComplete?daysUntil(latestTupping.expectedLambing):null;
 
-  const startEdit=()=>{setIsEditing(true);setEdited({...ewe});}; const cancelEdit=()=>{setIsEditing(false);setEdited(null);};
-  const saveEdit=()=>{upd(edited);setIsEditing(false);setEdited(null);};
+  const startEdit=()=>{setIsEditing(true);setEdited({...ewe});}; 
+  const cancelEdit=()=>{setIsEditing(false);setEdited(null);};
+  const saveEdit=()=>{updatedEwe(edited);setIsEditing(false);setEdited(null);};
   const uf=(f,v)=>setEdited((p)=>({...p,[f]:v}));
-  const imgUp=(e)=>{ const f=e.target.files?.[0]; if(!f) return; const r=new FileReader(); r.onloadend=()=>upd({...ewe,image:r.result}); r.readAsDataURL(f); };
+  
+  /* ── image upload ── */
+  const [photoUploading,  setPhotoUploading] = useState(false);
+  
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setPhotoUploading(true);
+      const url = await uploadAnimalPhoto(file, "sheep");
+      updatedEwe({ ...ewe, image: url });
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+    /* ── Status change — intercept "Sold" to show sell modal ── */
+  const handleStatusChange = (newStatus) => {
+    if (newStatus === "Sold") {
+      setShowSellModal(true);
+    } else {
+      updateField("status", newStatus);
+    }
+  };
 
   const addGrowth=()=>{ if(!newGrowth.date) return; upd({...ewe,growthRecords:[...gr,{...newGrowth,id:Date.now()}]}); setNewGrowth({date:"",weight:"",bcs:0,price:"",notes:""}); setModal("viewGrowth"); };
   const addFeed=()=>{ if(!newFeed.date||!newFeed.feedType) return; upd({...ewe,feedRecords:[...fr,{...newFeed,id:Date.now()}]}); setNewFeed({date:"",feedType:"",amount:"",minerals:"",lactationDiet:"",notes:""}); setModal("viewFeed"); };
@@ -56,18 +99,27 @@ export default function EwesProfile() {
 
   const chartData=[...gr].sort((a,b)=>new Date(a.date)-new Date(b.date)).map((r)=>({date:r.date,weight:r.weight?parseFloat(r.weight):null,bcs:r.bcs?parseFloat(r.bcs):null}));
   const woolChartData=[...wr].sort((a,b)=>new Date(a.date)-new Date(b.date)).map((r)=>({date:r.date,kg:r.fleeceWeight?parseFloat(r.fleeceWeight):null}));
-  const [activeMetrics,setActiveMetrics]=useState(["weight"]);
-  const METRICS=[{key:"weight",label:"Weight",color:"#e11d48"},{key:"bcs",label:"BCS",color:"#16a34a"}];
-  const toggleM=(k)=>setActiveMetrics((p)=>p.includes(k)?p.length>1?p.filter((x)=>x!==k):p:[...p,k]);
-
-  const statusColor={Healthy:"bg-green-100 text-green-800",Sick:"bg-red-100 text-red-700","Under Treatment":"bg-amber-100 text-amber-700"}[ewe.status]||"bg-gray-100 text-gray-600";
-  const pColor=P_COLORS[ewe.pregnancyStatus]||"bg-gray-400";
-
   const totalWoolKg=wr.reduce((s,r)=>s+(parseFloat(r.fleeceWeight)||0),0).toFixed(1);
   const totalWoolValue=wr.reduce((s,r)=>s+(parseFloat(r.totalValue)||0),0);
+  const statusColor={Healthy:"bg-green-100 text-green-800",Sick:"bg-red-100 text-red-700","Under Treatment":"bg-amber-100 text-amber-700"}[ewe.status]||"bg-gray-100 text-gray-600";
+  const pColor=P_COLORS[ewe.pregnancyStatus]||"bg-gray-400";
+  
+  const [activeMetrics,setActiveMetrics]=useState(["weight"]);
+  const METRICS=[{
+    key:"weight",
+    label:"Weight",
+    color:"#e11d48"
+  },{
+    key:"bcs",
+    label:"BCS",
+    color:"#16a34a"
+  }];
+  const toggleM=(k)=>setActiveMetrics((p)=>p.includes(k)?p.length>1?p.filter((x)=>x!==k):p:[...p,k]);
+
 
   return (
     <div className="bg-rose-50 flex flex-col">
+
       {/* TOP BAR */}
       <div className="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-white shadow-sm flex-wrap">
         <button onClick={()=>navigate(-1)} className="bg-white shadow w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition">
@@ -87,12 +139,32 @@ export default function EwesProfile() {
         </div>
       )}
 
+      {/* BODY */}
       <div className="flex flex-1 gap-6 p-4 sm:p-6 flex-col lg:flex-row">
+
         {/* LEFT */}
         <div className="flex flex-col gap-4 w-full lg:w-72 lg:shrink-0">
+
+          {/* IMAGE */}
           <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
-            {ewe.image?<img src={ewe.image} alt={ewe.name} className="w-full h-full object-cover"/>:<div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>}
-            <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer"><span className="opacity-0 group-hover:opacity-100 bg-white/90 text-rose-800 text-xs font-semibold px-3 py-1 rounded-full transition">Change photo</span><input type="file" accept="image/*" className="hidden" onChange={imgUp}/></label>
+            {ewe.image
+              ?<img src={ewe.image} alt={ewe.name} className="w-full h-full object-cover"/>
+              :<div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>
+            }
+
+            // Show uploading state on the image:
+            {photoUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span className="text-white text-sm font-semibold">Uploading…</span>
+              </div>
+            )}
+
+            <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer">
+              <span className="opacity-0 group-hover:opacity-100 bg-white/90 text-rose-800 text-xs font-semibold px-3 py-1 rounded-full transition">
+                Change photo
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload}/>
+            </label>
           </div>
 
           <div className="bg-white rounded-2xl shadow p-4 text-sm space-y-2">
@@ -123,6 +195,22 @@ export default function EwesProfile() {
               {dr.length>0&&dr.at(-1).nextDate&&<div className="flex justify-between"><span className="text-gray-500">Next drench</span><span className="font-bold text-orange-600">{dr.at(-1).nextDate}</span></div>}
             </div>
           </div>
+
+          {/* ── SELL BUTTON ── */}
+          {ewe.status !== "Sold" && (
+            <button
+              onClick={() => setShowSellModal(true)}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition shadow text-sm flex items-center justify-center gap-2"
+            >
+              💰 Sell this Ewe
+            </button>
+          )}
+
+          {ewe.status === "Sold" && (
+            <div className="bg-gray-100 rounded-xl px-4 py-3 text-center text-sm text-gray-500 font-semibold">
+              ✅ This ewe has been sold
+            </div>
+          )}
         </div>
 
         {/* RIGHT */}
@@ -169,6 +257,23 @@ export default function EwesProfile() {
           <GrowthTable records={gr} onDelete={(rid)=>del("growthRecords",rid)} accentHover="hover:bg-rose-50/40"/>
         </div>
       </div>
+
+      {/* ══ SELL ANIMAL MODAL ══ */}
+            {showSellModal && (
+              <SellAnimalModal
+                animal={ewe}
+                species="Sheep"
+                onConfirm={() => {      
+                  updatedEwe({ ...ewe, status: "Sold" });
+                  setShowSellModal(false);
+                  if (isEditing) { setIsEditing(false); setEdited(null); }
+                }}
+                onCancel={() => {
+                  setShowSellModal(false);
+                  if (isEditing) uf("status", ewe.status);
+                }}
+              />
+            )}      
 
       {/* ══ MODALS ══ */}
       {modal==="growth"&&<Modal title="Add Growth Record" onClose={()=>setModal(null)}><Field label="Date"><input type="date" value={newGrowth.date} onChange={(e)=>setNewGrowth({...newGrowth,date:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="Weight (kg)"><input type="number" step="0.1" value={newGrowth.weight} onChange={(e)=>setNewGrowth({...newGrowth,weight:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="Body Condition Score"><BCSPicker value={newGrowth.bcs} onChange={(v)=>setNewGrowth({...newGrowth,bcs:v})}/></Field><Field label="Estimated Price (KES)"><input type="number" value={newGrowth.price} onChange={(e)=>setNewGrowth({...newGrowth,price:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="Notes"><textarea value={newGrowth.notes} onChange={(e)=>setNewGrowth({...newGrowth,notes:e.target.value})} className="border rounded-lg p-2 w-full h-16 resize-none"/></Field><div className="flex gap-3 pt-2"><button onClick={addGrowth} className="flex-1 bg-rose-600 text-white py-2 rounded-xl hover:bg-rose-700 font-semibold">Save</button><button onClick={()=>setModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-xl">Cancel</button></div></Modal>}

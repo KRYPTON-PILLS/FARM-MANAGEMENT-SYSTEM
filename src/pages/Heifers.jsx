@@ -22,6 +22,7 @@ export default function Heifers() {
   const [age,   setAge]   = useState("");
   const [image, setImage] = useState("");
   const [imageUploading,  setImageUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const addHeifer = () => {
     if (!name || !age || !image) return;
@@ -44,10 +45,30 @@ export default function Heifers() {
     setName(""); setAge(""); setImage("");
   };
 
+   /* ── Image upload ── */
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setImageUploading(true);
+      setUploadProgress(0);
+      const url = await uploadAnimalPhoto(file, "cattle",
+        (pct) => setUploadProgress(pct)
+      );
+      setImage(url);
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("Image upload failed. You can still add the bull without a photo.");
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+
   return (
     <div className="bg-green-50 relative p-6">
 
-      {/* BACK */}
+      {/* BACK BUTTON */}
       <button onClick={() => navigate(-1)}
         className="absolute -top-4 -left-[15px] z-50 bg-white shadow-md w-11 h-11 rounded-full flex items-center justify-center hover:scale-110 transition">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-green-700">
@@ -55,44 +76,80 @@ export default function Heifers() {
         </svg>
       </button>
 
+      {/* TITLE */}
       <h2 className="text-3xl font-bold text-green-900 mb-6 ml-14">Heifers Management</h2>
 
       {/* ADD FORM */}
       <div className="bg-white border rounded-2xl p-5 flex flex-wrap gap-3 shadow-sm mb-8">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Heifer Name"
-          className="border p-3 rounded-lg flex-1 min-w-[200px]" />
-        <input value={age} onChange={(e) => setAge(e.target.value)} type="number" placeholder="Age (months)"
-          className="border p-3 rounded-lg w-36" />
 
-          {/* UPLOAD IMAGE*/}
-        <input type="file" accept="image/*" 
-        onChange={async (e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          try {
-            setImageUploading(true);
-            const url = await uploadAnimalPhoto(file, "cattle");
-            setImage(url);
-          } catch (err) {
-            console.error("Upload failed:", err);
-          } finally {
-            setImageUploading(false);
-          }
-        }}
-        className="border p-3 rounded-lg flex-1 min-w-[220px]" />
-        <button onClick={addHeifer} disabled={imageUploading}
-          className="bg-purple-600 text-white px-5 py-3 rounded-xl hover:bg-purple-700 transition">
-          {imageUploading ? "Uploading…" : "Add Heifer"}
+        {/* NAME */}
+        <input 
+          value={name} 
+          onChange={(e) => setName(e.target.value)} 
+          placeholder="Heifer Name"
+          className="border p-3 rounded-lg flex-1 min-w-[200px]"
+        />
+
+        {/* AGE */}
+        <input 
+          value={age} 
+          onChange={(e) => setAge(e.target.value)} 
+          type="number" 
+          placeholder="Age (months)"
+          className="border p-3 rounded-lg w-36" 
+        />
+
+        {/* IMAGE UPLOAD */}
+        <div className="flex flex-col gap-1 flex-1 min-w-[220px]">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            disabled={imageUploading}
+            className="border p-3 rounded-lg w-full"
+          />
+          
+          {/* Status text */}
+          {imageUploading && (
+            <p className="text-xs text-green-600 font-semibold">
+              Uploading photo… {uploadProgress}%
+            </p>
+          )}
+          {!imageUploading && image && (
+            <p className="text-xs text-green-600 font-semibold">✅ Photo ready</p>
+          )}
+        </div>
+
+        {/* ADD BUTTON — only requires name + age */}
+        <button
+          onClick={addHeifer}
+          disabled={!name || !age}
+          className="bg-green-600 text-white px-5 py-3 rounded-xl hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+        >
+          Add Heifer
         </button>
       </div>
 
       {/* GRID */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {heifers.map((h) => (
-          <div key={h.id} className="relative h-80 rounded-3xl overflow-hidden shadow-xl group">
-            <img src={h.image || "/images/placeholder.jpg"} alt={h.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-              onError={(e) => { e.target.src = `https://placehold.co/400x320/f3e8ff/581c87?text=${h.name}`; }} />
+          <div key={h.id} 
+            className="relative h-80 rounded-3xl overflow-hidden shadow-xl group">
+
+            {/* IMAGE or placeholder */}
+            {h.image ? (
+              <img
+                src={h.image}
+                alt={h.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
+                <span className="text-6xl">🐂</span>
+              </div>
+            )}
+
+
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
             {/* age top left */}

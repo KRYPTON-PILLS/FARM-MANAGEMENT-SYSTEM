@@ -113,15 +113,7 @@ export default function Bulls() {
             disabled={imageUploading}
             className="border p-3 rounded-lg w-full"
           />
-          {/* Progress bar */}
-          {imageUploading && (
-            <div className="w-full bg-gray-100 rounded-full h-1.5">
-              <div
-                className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-          )}
+          
           {/* Status text */}
           {imageUploading && (
             <p className="text-xs text-green-600 font-semibold">

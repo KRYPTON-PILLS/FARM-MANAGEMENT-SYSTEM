@@ -48,12 +48,13 @@ export default function FarmShell() {
         <h1 className="text-2xl font-bold mb-8">🌿 Farm System</h1>
 
         <ul className="space-y-2 flex-1">
-          <li><NavLink to="/dashboard" className={navLink}>📊 Dashboard</NavLink></li>
-          <li><NavLink to="/assistant" className={navLink}>🤖 Assistant</NavLink></li>
-          <li><NavLink to="/animals"   className={navLink}>🐄 Animals</NavLink></li>
-          <li><NavLink to="/crops"     className={navLink}>🌱 Crops</NavLink></li>
-          <li><NavLink to="/sales"     className={navLink}>💰 Sales</NavLink></li>
-          <li><NavLink to="/reports"   className={navLink}>📈 Reports</NavLink></li>
+          <li><NavLink to="/dashboard"   className={navLink}>📊 Dashboard</NavLink></li>
+          <li><NavLink to="/assistant"   className={navLink}>🤖 Assistant</NavLink></li>
+          <li><NavLink to="/animals"     className={navLink}>🐄 Animals</NavLink></li>
+          <li><NavLink to="/crops"       className={navLink}>🌱 Crops</NavLink></li>
+          <li><NavLink to="/sales"       className={navLink}>💰 Sales</NavLink></li>
+          <li><NavLink to="/marketpage"  className={navLink}>🏪 Market</NavLink></li>
+          <li><NavLink to="/reports"     className={navLink}>📈 Reports</NavLink></li>
         </ul>
 
         <div className="mt-4 space-y-2">
@@ -77,7 +78,6 @@ export default function FarmShell() {
           className="p-2 rounded hover:bg-green-700 transition-colors"
           aria-label="Open menu"
         >
-          {/* Hamburger icon */}
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
@@ -113,12 +113,13 @@ export default function FarmShell() {
             {/* Nav links — close drawer on tap */}
             <ul className="space-y-2 flex-1">
               {[
-                { to: "/dashboard", label: "📊 Dashboard" },
-                { to: "/assistant", label: "🤖 Assistant" },
-                { to: "/animals",   label: "🐄 Animals"   },
-                { to: "/crops",     label: "🌱 Crops"     },
-                { to: "/sales",     label: "💰 Sales"     },
-                { to: "/reports",   label: "📈 Reports"   },
+                { to: "/dashboard",  label: "📊 Dashboard" },
+                { to: "/assistant",  label: "🤖 Assistant" },
+                { to: "/animals",    label: "🐄 Animals"   },
+                { to: "/crops",      label: "🌱 Crops"     },
+                { to: "/sales",      label: "💰 Sales"     },
+                { to: "/marketpage", label: "🏪 Market"    },
+                { to: "/reports",    label: "📈 Reports"   },
               ].map(({ to, label }) => (
                 <li key={to}>
                   <NavLink
@@ -160,15 +161,14 @@ export default function FarmShell() {
 
       {/* ════════════════════════════════════════
           MOBILE BOTTOM NAV BAR
-          Quick access to the 5 most used pages
       ════════════════════════════════════════ */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-green-900 text-white border-t border-green-700 flex justify-around items-center py-2 shadow-lg">
         {[
-          { to: "/dashboard", icon: "📊", label: "Home"    },
-          { to: "/animals",   icon: "🐄", label: "Animals" },
-          { to: "/crops",     icon: "🌱", label: "Crops"   },
-          { to: "/sales",     icon: "💰", label: "Sales"   },
-          { to: "/profile",   icon: "👤", label: "Profile" },
+          { to: "/dashboard",  icon: "📊", label: "Home"    },
+          { to: "/animals",    icon: "🐄", label: "Animals" },
+          { to: "/crops",      icon: "🌱", label: "Crops"   },
+          { to: "/marketpage", icon: "🏪", label: "Market"  },
+          { to: "/profile",    icon: "👤", label: "Profile" },
         ].map(({ to, icon, label }) => (
           <NavLink
             key={to}

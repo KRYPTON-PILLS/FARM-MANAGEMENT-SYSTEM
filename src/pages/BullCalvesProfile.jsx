@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
+import SellAnimalModal from "../components/SellAnimalModal";
+import { uploadAnimalPhoto } from "../utils/imageUpload";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
@@ -100,15 +102,16 @@ export default function BullCalvesProfile() {
   const navigate = useNavigate();
   const { animals = [], setAnimals } = useContext(FarmContext);
 
-  const calf = animals.find(
+  const bullcalf = animals.find(
     (a) => a.id?.toString() === id && a.category === "cattle" && a.type?.toLowerCase() === "bull-calf"
   );
-  const updateCalf = (updated) =>
+  const updateBullCalf = (updated) =>
     setAnimals((prev) => prev.map((a) => (a.id?.toString() === id ? updated : a)));
 
   const [isEditing, setIsEditing] = useState(false);
-  const [edited,    setEdited]    = useState(null);
+  const [editedBullCalf,    setEditedBullCalf]    = useState(null);
   const [modal,     setModal]     = useState(null);
+  const [showSellModal, setShowSellModal]  =  useState(false);
 
   const [newGrowth,  setNewGrowth]  = useState({ date:"", weight:"", price:"", health:0, notes:"" });
   const [newFeed,    setNewFeed]    = useState({ date:"", feedType:"", amount:"", minerals:"", transitionDiet:"", notes:"" });
@@ -121,57 +124,78 @@ export default function BullCalvesProfile() {
       prev.includes(key) ? (prev.length > 1 ? prev.filter((k) => k !== key) : prev) : [...prev, key]
     );
 
-  if (!calf) return <p className="p-6 text-red-600">Bull calf not found.</p>;
+  if (!bullcalf) return <p className="p-6 text-red-600">Bull calf not found.</p>;
 
-  const growthRecords = calf.growthRecords || [];
-  const feedRecords   = calf.feedRecords   || [];
-  const medicalLog    = calf.medicalLog    || [];
+  const growthRecords = bullcalf.growthRecords || [];
+  const feedRecords   = bullcalf.feedRecords   || [];
+  const medicalLog    = bullcalf.medicalLog    || [];
 
   const bulls = animals.filter((a) => a.category === "cattle" && a.type?.toLowerCase() === "bull");
   const cows  = animals.filter((a) => a.category === "cattle" && a.type?.toLowerCase() === "cow");
 
-  const startEditing  = () => { setIsEditing(true); setEdited({ ...calf }); };
+  const startEditing  = () => { setIsEditing(true); setEdited({ ...bullcalf }); };
   const cancelEditing = () => { setIsEditing(false); setEdited(null); };
-  const saveChanges   = () => { updateCalf(edited); setIsEditing(false); setEdited(null); };
+  const saveChanges   = () => { updateBullCalf(edited); setIsEditing(false); setEdited(null); };
   const updateField   = (f, v) => setEdited((p) => ({ ...p, [f]: v }));
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => updateCalf({ ...calf, image: reader.result });
-    reader.readAsDataURL(file);
+ /* ── image upload ── */
+  const [photoUploading,  setPhotoUploading] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setPhotoUploading(true);
+      const url = await uploadAnimalPhoto(file, "cattle");
+      updateBullCalf({ ...bullcalf, image: url });
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setPhotoUploading(false);
+    }
   };
+
+
+  /* ── Status change — intercept "Sold" to show sell modal ── */
+  const handleStatusChange = (newStatus) => {
+    if (newStatus === "Sold") {
+      setShowSellModal(true);
+    } else {
+      updateField("status", newStatus);
+    }
+  };
+
 
   const addGrowth = () => {
     if (!newGrowth.date) return;
     const updated = [...growthRecords, { ...newGrowth, id: Date.now() }];
-    updateCalf({ ...calf, growthRecords: updated });
+    updateBullCalf({ ...bullcalf, growthRecords: updated });
     setNewGrowth({ date:"", weight:"", price:"", health:0, notes:"" });
     setModal("viewGrowth");
   };
-  const deleteGrowth = (rid) => updateCalf({ ...calf, growthRecords: growthRecords.filter((r) => r.id !== rid) });
+  const deleteGrowth = (rid) => updateBullCalf({ ...bullcalf, growthRecords: growthRecords.filter((r) => r.id !== rid) });
 
   const addFeed = () => {
     if (!newFeed.date || !newFeed.feedType) return;
     const updated = [...feedRecords, { ...newFeed, id: Date.now() }];
-    updateCalf({ ...calf, feedRecords: updated });
+    updateBullCalf({ ...bullcalf, feedRecords: updated });
     setNewFeed({ date:"", feedType:"", amount:"", minerals:"", transitionDiet:"", notes:"" });
     setModal("viewFeed");
   };
-  const deleteFeed = (rid) => updateCalf({ ...calf, feedRecords: feedRecords.filter((r) => r.id !== rid) });
+  const deleteFeed = (rid) => updateBullCalf({ ...bullcalf, feedRecords: feedRecords.filter((r) => r.id !== rid) });
 
   const addMedical = () => {
     if (!newMedical.date || !newMedical.type) return;
     const updated = [...medicalLog, { ...newMedical, id: Date.now() }];
-    updateCalf({ ...calf, medicalLog: updated });
+    updateBullCalf({ ...bullcalf, medicalLog: updated });
     setNewMedical({ date:"", type:"", medicine:"", vetName:"", cost:"", notes:"" });
     setModal("viewMedical");
   };
-  const deleteMedical = (rid) => updateCalf({ ...calf, medicalLog: medicalLog.filter((r) => r.id !== rid) });
+  const deleteMedical = (rid) => updateBullCalf({ ...bullcalf, medicalLog: medicalLog.filter((r) => r.id !== rid) });
 
   const saveCastration = () => {
     if (!newCastration.date) return;
-    updateCalf({ ...calf, castrated: true, castrationRecord: { ...newCastration, id: Date.now() } });
+    updateBullCalf({ ...bullcalf, castrated: true, castrationRecord: { ...newCastration, id: Date.now() } });
     setModal(null);
   };
 
@@ -184,8 +208,8 @@ export default function BullCalvesProfile() {
       health: r.health ? parseFloat(r.health) : null,
     }));
 
-  const mColor = MATURITY_COLORS[calf.maturityStatus] || "bg-gray-400";
-  const statusColor = { Healthy:"bg-green-100 text-green-800", Sick:"bg-red-100 text-red-700", "Under Treatment":"bg-amber-100 text-amber-700" }[calf.status] || "bg-gray-100 text-gray-600";
+  const mColor = MATURITY_COLORS[bullcalf.maturityStatus] || "bg-gray-400";
+  const statusColor = { Healthy:"bg-green-100 text-green-800", Sick:"bg-red-100 text-red-700", "Under Treatment":"bg-amber-100 text-amber-700" }[bullcalf.status] || "bg-gray-100 text-gray-600";
 
   return (
     <div className="bg-green-50 flex flex-col">
@@ -199,9 +223,9 @@ export default function BullCalvesProfile() {
         </button>
         <h2 className="text-xl sm:text-2xl font-bold text-blue-900">Bull Calf Profile</h2>
         <div className="ml-auto flex items-center gap-2">
-          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor}`}>{calf.status}</span>
-          <span className={`text-xs font-semibold px-3 py-1 rounded-full text-white ${mColor}`}>{calf.maturityStatus || "Growing"}</span>
-          {calf.castrated && <span className="text-xs font-semibold px-3 py-1 rounded-full bg-gray-600 text-white">Castrated</span>}
+          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColor}`}>{bullcalf.status}</span>
+          <span className={`text-xs font-semibold px-3 py-1 rounded-full text-white ${mColor}`}>{bullcalf.maturityStatus || "Growing"}</span>
+          {bullcalf.castrated && <span className="text-xs font-semibold px-3 py-1 rounded-full bg-gray-600 text-white">Castrated</span>}
         </div>
       </div>
 
@@ -213,8 +237,8 @@ export default function BullCalvesProfile() {
 
           {/* IMAGE */}
           <div className="relative h-56 sm:h-72 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
-            {calf.image
-              ? <img src={calf.image} alt={calf.name} className="w-full h-full object-cover" />
+            {bullcalf.image
+              ? <img src={bullcalf.image} alt={bullcalf.name} className="w-full h-full object-cover" />
               : <div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>}
             <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer">
               <span className="opacity-0 group-hover:opacity-100 bg-white/90 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full transition">Change photo</span>
@@ -233,8 +257,8 @@ export default function BullCalvesProfile() {
               <div key={field} className="flex justify-between items-center border-b last:border-0 pb-1 last:pb-0">
                 <span className="text-gray-500 font-medium">{label}</span>
                 {isEditing
-                  ? <input value={edited[field] || ""} onChange={(e) => updateField(field, e.target.value)} className="border rounded px-2 py-0.5 w-28 text-right text-sm" />
-                  : <span className="text-blue-900 font-semibold">{calf[field] ? `${calf[field]}${suffix}` : <span className="text-gray-300">—</span>}</span>}
+                  ? <input value={editedBullCalf[field] || ""} onChange={(e) => updateField(field, e.target.value)} className="border rounded px-2 py-0.5 w-28 text-right text-sm" />
+                  : <span className="text-blue-900 font-semibold">{bullcalf[field] ? `${bullcalf[field]}${suffix}` : <span className="text-gray-300">—</span>}</span>}
               </div>
             ))}
           </div>
@@ -252,7 +276,7 @@ export default function BullCalvesProfile() {
                       {(field === "dam" ? cows : bulls).map((a) => <option key={a.id} value={a.name}>{a.name}</option>)}
                     </select>
                   )
-                  : <span className="text-blue-900 font-semibold">{calf[field] || <span className="text-gray-300">—</span>}</span>}
+                  : <span className="text-blue-900 font-semibold">{bullcalf[field] || <span className="text-gray-300">—</span>}</span>}
               </div>
             ))}
             {isEditing && (
@@ -261,10 +285,10 @@ export default function BullCalvesProfile() {
                 <input type="date" value={edited.weaningDate || ""} onChange={(e) => updateField("weaningDate", e.target.value)} className="border rounded px-2 py-0.5 text-sm" />
               </div>
             )}
-            {!isEditing && calf.weaningDate && (
+            {!isEditing && bullcalf.weaningDate && (
               <div className="flex justify-between items-center pt-1">
                 <span className="text-gray-500">Weaned</span>
-                <span className="text-blue-900 font-semibold">{calf.weaningDate}</span>
+                <span className="text-blue-900 font-semibold">{bullcalf.weaningDate}</span>
               </div>
             )}
           </div>
@@ -281,18 +305,18 @@ export default function BullCalvesProfile() {
                   </div>
                 </div>
               )
-              : <MaturityBar current={calf.weight} target={calf.targetWeight} />}
-            {!isEditing && !calf.targetWeight && <p className="text-gray-300 text-xs">Set a target weight in Edit Profile</p>}
+              : <MaturityBar current={bullcalf.weight} target={bullcalf.targetWeight} />}
+            {!isEditing && !bullcalf.targetWeight && <p className="text-gray-300 text-xs">Set a target weight in Edit Profile</p>}
           </div>
 
           {/* CASTRATION */}
           <div className="bg-white rounded-2xl shadow p-4 text-sm">
             <p className="font-semibold text-gray-500 text-xs uppercase mb-2">Castration</p>
-            {calf.castrated && calf.castrationRecord ? (
+            {bullcalf.castrated && bullcalf.castrationRecord ? (
               <div className="space-y-1">
-                <p className="text-gray-600 text-xs">Date: <span className="font-semibold text-gray-800">{calf.castrationRecord.date}</span></p>
-                <p className="text-gray-600 text-xs">Method: <span className="font-semibold text-gray-800">{calf.castrationRecord.method || "—"}</span></p>
-                {calf.castrationRecord.vetName && <p className="text-gray-600 text-xs">Vet: {calf.castrationRecord.vetName}</p>}
+                <p className="text-gray-600 text-xs">Date: <span className="font-semibold text-gray-800">{bullcalf.castrationRecord.date}</span></p>
+                <p className="text-gray-600 text-xs">Method: <span className="font-semibold text-gray-800">{bullcalf.castrationRecord.method || "—"}</span></p>
+                {bullcalf.castrationRecord.vetName && <p className="text-gray-600 text-xs">Vet: {bullcalf.castrationRecord.vetName}</p>}
               </div>
             ) : (
               <button onClick={() => setModal("castration")}
@@ -301,6 +325,44 @@ export default function BullCalvesProfile() {
               </button>
             )}
           </div>
+
+          {/* PURCHASE INFO */}
+          <div className="bg-white rounded-2xl shadow p-4 space-y-2 text-sm">
+            <p className="font-semibold text-gray-500 text-xs uppercase mb-1">Purchase Info</p>
+            {[
+              { label: "Date",  field: "datePurchased" },
+              { label: "Price", field: "purchasePrice", prefix: "KES " },
+            ].map(({ label, field, prefix = "" }) => (
+              <div key={field} className="flex justify-between items-center border-b last:border-0 pb-1 last:pb-0">
+                <span className="text-gray-500">{label}</span>
+                {isEditing ? (
+                  <input value={editedBullCalf[field] || ""}
+                    onChange={(e) => updateField(field, e.target.value)}
+                    className="border rounded px-2 py-0.5 w-28 text-right text-sm" />
+                ) : (
+                  <span className="text-green-900 font-semibold">
+                    {bullcalf[field] ? `${prefix}${bullcalf[field]}` : <span className="text-gray-300">—</span>}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* ── SELL BUTTON ── */}
+          {bullcalf.status !== "Sold" && (
+            <button
+              onClick={() => setShowSellModal(true)}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition shadow text-sm flex items-center justify-center gap-2"
+            >
+              💰 Sell this BullCalf
+            </button>
+          )}
+
+          {bullcalf.status === "Sold" && (
+            <div className="bg-gray-100 rounded-xl px-4 py-3 text-center text-sm text-gray-500 font-semibold">
+              ✅ This bullcalf has been sold
+            </div>
+          )}
         </div>
 
         {/* RIGHT */}
@@ -313,7 +375,7 @@ export default function BullCalvesProfile() {
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Name</p>
                 {isEditing
                   ? <input value={edited.name || ""} onChange={(e) => updateField("name", e.target.value)} className="text-xl sm:text-2xl font-bold border-b border-blue-400 outline-none w-full" />
-                  : <h3 className="text-xl sm:text-2xl font-bold text-blue-900">{calf.name}</h3>}
+                  : <h3 className="text-xl sm:text-2xl font-bold text-blue-900">{bullcalf.name}</h3>}
               </div>
               {!isEditing
                 ? <button onClick={startEditing} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700 transition">Edit Profile</button>
@@ -326,9 +388,14 @@ export default function BullCalvesProfile() {
               <div className="mt-4 flex gap-4 flex-wrap">
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Health Status</p>
-                  <select value={edited.status || ""} onChange={(e) => updateField("status", e.target.value)} className="border rounded-lg px-3 py-2 text-sm">
+                  <select value={editedBullCalf.status || ""} onChange={(e) => updateField("status", e.target.value)} className="border rounded-lg px-3 py-2 text-sm">
                     {["Healthy","Sick","Under Treatment"].map((s) => <option key={s}>{s}</option>)}
                   </select>
+                  {editedBullCalf.status !== "Sold" && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Select "Sold" to record a sale - a form will appear to capture the <details className=""></details>
+                  </p>
+                )}
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Maturity Status</p>
@@ -471,6 +538,23 @@ export default function BullCalvesProfile() {
           )}
         </div>
       </div>
+
+      {/* ══ SELL ANIMAL MODAL ══ */}
+      {showSellModal && (
+        <SellAnimalModal
+          animal={bullcalf}
+          species="Cattle"
+          onConfirm={() => {      
+            updateBullCalf({ ...bullcalf, status: "Sold" });
+            setShowSellModal(false);
+            if (isEditing) { setIsEditing(false); setEditedBullCalf(null); }
+          }}
+          onCancel={() => {
+            setShowSellModal(false);
+            if (isEditing && editedBullCalf) updateField("status", bullcalf.status);
+          }}
+        />
+      )}
 
       {/* ══ MODALS ══ */}
 

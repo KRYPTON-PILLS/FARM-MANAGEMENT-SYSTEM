@@ -1,0 +1,594 @@
+/* MarketPage.css */
+
+.market-page {
+  padding: 1.5rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.market-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+  gap: 1rem;
+}
+
+.market-header-text h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a2e1a;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.02em;
+}
+
+.market-header-text p {
+  font-size: 0.875rem;
+  color: #5a7a5a;
+  margin: 0;
+}
+
+/* ── Tabs ── */
+.market-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1.5px solid #d4e4d4;
+  margin-bottom: 1.5rem;
+}
+
+.market-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #5a7a5a;
+  background: transparent;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1.5px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  border-radius: 4px 4px 0 0;
+}
+
+.market-tab:hover {
+  color: #2d5a27;
+  background: #f0f7f0;
+}
+
+.market-tab.active {
+  color: #2d5a27;
+  border-bottom-color: #2d5a27;
+  background: transparent;
+}
+
+.tab-icon {
+  font-size: 1rem;
+}
+
+.tab-badge {
+  background: #2d5a27;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  line-height: 1.4;
+}
+
+/* ── Toolbar ── */
+.prices-toolbar,
+.listings-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2rem;
+  border: 1px solid #c5d9c5;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: #fff;
+  color: #1a2e1a;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  border-color: #2d5a27;
+}
+
+.filter-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #c5d9c5;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: #fff;
+  color: #1a2e1a;
+  cursor: pointer;
+  outline: none;
+  min-width: 160px;
+}
+
+.filter-select:focus {
+  border-color: #2d5a27;
+}
+
+/* ── Last updated ── */
+.last-updated {
+  font-size: 0.78rem;
+  color: #7a9a7a;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.source-badge {
+  background: #eaf3ea;
+  color: #2d5a27;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 0.72rem;
+}
+
+/* ── Summary cards ── */
+.prices-summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.summary-card {
+  background: #f5f9f5;
+  border: 1px solid #d4e4d4;
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  color: #5a7a5a;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1a2e1a;
+  line-height: 1;
+}
+
+/* ── Prices table ── */
+.prices-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #d4e4d4;
+  border-radius: 12px;
+}
+
+.prices-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.prices-table thead tr {
+  background: #f0f7f0;
+}
+
+.prices-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #3d5c3d;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #d4e4d4;
+  white-space: nowrap;
+}
+
+.prices-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #edf5ed;
+  color: #2a3e2a;
+  vertical-align: middle;
+}
+
+.prices-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.prices-table tbody tr:hover {
+  background: #f8fbf8;
+}
+
+.commodity-name {
+  font-weight: 600;
+  color: #1a2e1a;
+}
+
+.price-cell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: #1a4d1a;
+}
+
+/* ── Category tags ── */
+.category-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cat-crops { background: #eaf3ea; color: #2d5a27; }
+.cat-livestock { background: #fef3e8; color: #8a4a10; }
+.cat-poultry { background: #fff8e8; color: #8a6a10; }
+.cat-dairy { background: #e8f0fe; color: #1a4a8a; }
+.cat-fisheries { background: #e8f8fe; color: #1a6a8a; }
+
+/* ── Trend badges ── */
+.trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.trend-up { background: #fde8e8; color: #8a1a1a; }
+.trend-down { background: #eaf3ea; color: #1a5a1a; }
+.trend-stable { background: #f5f5f5; color: #5a5a5a; }
+
+/* ── Create listing button ── */
+.btn-create-listing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.25rem;
+  background: #2d5a27;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-create-listing:hover {
+  background: #1e3f1a;
+}
+
+.btn-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* ── Filter pills ── */
+.filter-pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  padding: 0.4rem 0.875rem;
+  border: 1px solid #c5d9c5;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #fff;
+  color: #3d5c3d;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-pill:hover {
+  background: #f0f7f0;
+  border-color: #2d5a27;
+}
+
+.filter-pill.active {
+  background: #2d5a27;
+  color: #fff;
+  border-color: #2d5a27;
+}
+
+/* ── Listings grid ── */
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+/* ── States ── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: #5a7a5a;
+  font-size: 0.875rem;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #d4e4d4;
+  border-top-color: #2d5a27;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-state {
+  text-align: center;
+  padding: 2rem;
+  color: #8a1a1a;
+}
+
+.error-state button {
+  margin-top: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: #2d5a27;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #5a7a5a;
+  font-size: 0.9rem;
+}
+
+.listings-empty {
+  padding: 4rem 1rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.listings-empty h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a2e1a;
+  margin: 0 0 0.4rem;
+}
+
+.listings-empty p {
+  font-size: 0.875rem;
+  margin: 0 0 1.25rem;
+  max-width: 380px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .market-page { padding: 1rem; }
+  .market-header { flex-direction: column; }
+  .prices-summary-row { grid-template-columns: 1fr 1fr; }
+  .prices-summary-row .summary-card:last-child { grid-column: span 2; }
+  .prices-toolbar { flex-direction: column; align-items: stretch; }
+  .filter-select { min-width: unset; }
+}
+
+/* ── Inquire modal ── */
+.inquire-modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+}
+
+.inquire-body {
+  padding: 1.25rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.inquire-listing-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a2e1a;
+  margin: 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #edf5ed;
+}
+
+.inquire-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.inquire-label {
+  color: #7a9a7a;
+  font-weight: 500;
+  min-width: 70px;
+}
+
+.inquire-val {
+  color: #1a2e1a;
+  font-weight: 500;
+  text-align: right;
+}
+
+.inquire-link {
+  color: #2d5a27;
+  font-weight: 500;
+  text-decoration: none;
+  text-align: right;
+}
+
+.inquire-link:hover {
+  text-decoration: underline;
+}
+
+.btn-email-seller {
+  display: block;
+  text-align: center;
+  margin-top: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  background: #2d5a27;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.btn-email-seller:hover {
+  background: #1e3f1a;
+}
+
+/* ── WhatsApp + Call buttons ── */
+.inquire-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.btn-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #25d366;
+  color: #fff;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.btn-whatsapp:hover {
+  background: #1da851;
+}
+
+.btn-call {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  color: #2d5a27;
+  border: 2px solid #2d5a27;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.btn-call:hover {
+  background: #f0f7f0;
+}
+
+.contact-btn-icon {
+  font-size: 1.1rem;
+}
+
+.inquire-note {
+  font-size: 0.72rem;
+  color: #9aaa9a;
+  text-align: center;
+  margin: 0;
+}
+
+/* ── Phone input in CreateListingModal ── */
+.contact-section {
+  background: #f5f9f5;
+  border: 1px solid #d4e4d4;
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contact-section-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3d5c3d;
+  margin: 0 0 0.25rem;
+}
+
+.phone-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.phone-prefix {
+  padding: 0.55rem 0.65rem;
+  background: #eaf3ea;
+  border: 1px solid #c5d9c5;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  font-size: 0.8rem;
+  color: #3d5c3d;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.phone-input {
+  border-radius: 0 8px 8px 0 !important;
+  flex: 1;
+}

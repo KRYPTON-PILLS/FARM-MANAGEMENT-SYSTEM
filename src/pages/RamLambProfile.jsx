@@ -1,8 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
-import { Modal, Field, BCSPicker, BCSBadge, ActionCard, GrowthTable } from "../components/SheepHelpers";
+import { Modal, Field, BCSPicker, BCSBadge, FAMACHAPicker, FAMACHABadge, ActionCard, GrowthTable } from "../components/SheepHelpers";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import SellAnimalModal from "../components/SellAnimalModal";
+import { uploadAnimalPhoto } from "../utils/imageUpload";
 
 const MATURITY = ["Weaning","Growing","Near Maturity","Ready"];
 const M_COLORS = { Weaning:"bg-gray-400", Growing:"bg-amber-500", "Near Maturity":"bg-sky-500", Ready:"bg-green-600" };
@@ -22,6 +24,8 @@ export default function RamLambProfile() {
 
   const [isEditing,setIsEditing]=useState(false); const [edited,setEdited]=useState(null);
   const [modal,setModal]=useState(null); const [gradModal,setGradModal]=useState(false);
+  const [showSellModal, setShowSellModal] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [newGrowth,setNewGrowth]=useState({date:"",weight:"",bcs:0,price:"",notes:""});
   const [newFeed,setNewFeed]=useState({date:"",feedType:"",amount:"",minerals:"",notes:""});
   const [newMed,setNewMed]=useState({date:"",type:"",medicine:"",vetName:"",cost:"",notes:""});
@@ -34,7 +38,21 @@ export default function RamLambProfile() {
 
   const startEdit=()=>{setIsEditing(true);setEdited({...rml});}; const cancelEdit=()=>{setIsEditing(false);setEdited(null);};
   const saveEdit=()=>{upd(edited);setIsEditing(false);setEdited(null);}; const uf=(f,v)=>setEdited((p)=>({...p,[f]:v}));
-  const imgUp=(e)=>{ const f=e.target.files?.[0]; if(!f) return; const r=new FileReader(); r.onloadend=()=>upd({...rml,image:r.result}); r.readAsDataURL(f); };
+
+  /* ── image upload (cloud) ── */
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setPhotoUploading(true);
+      const url = await uploadAnimalPhoto(file, "sheep");
+      upd({ ...rml, image: url });
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
 
   const addGrowth=()=>{ if(!newGrowth.date) return; upd({...rml,growthRecords:[...gr,{...newGrowth,id:Date.now()}]}); setNewGrowth({date:"",weight:"",bcs:0,price:"",notes:""}); setModal("viewGrowth"); };
   const addFeed=()=>{ if(!newFeed.date||!newFeed.feedType) return; upd({...rml,feedRecords:[...fr,{...newFeed,id:Date.now()}]}); setNewFeed({date:"",feedType:"",amount:"",minerals:"",notes:""}); setModal("viewFeed"); };
@@ -65,7 +83,12 @@ export default function RamLambProfile() {
         <div className="flex flex-col gap-4 w-full lg:w-72 lg:shrink-0">
           <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
             {rml.image?<img src={rml.image} alt={rml.name} className="w-full h-full object-cover"/>:<div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>}
-            <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer"><span className="opacity-0 group-hover:opacity-100 bg-white/90 text-sky-800 text-xs font-semibold px-3 py-1 rounded-full transition">Change photo</span><input type="file" accept="image/*" className="hidden" onChange={imgUp}/></label>
+            <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer">
+              <span className="opacity-0 group-hover:opacity-100 bg-white/90 text-sky-800 text-xs font-semibold px-3 py-1 rounded-full transition">
+                {photoUploading ? "Uploading…" : "Change photo"}
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload}/>
+            </label>
           </div>
           <div className="bg-white rounded-2xl shadow p-4 text-sm space-y-2">
             {[{l:"Breed",f:"breed"},{l:"Color",f:"color"},{l:"Weight",f:"weight",s:" kg"},{l:"Age",f:"age",s:" mo"}].map(({l,f,s=""})=>(<div key={f} className="flex justify-between items-center border-b last:border-0 pb-1 last:pb-0"><span className="text-gray-500">{l}</span>{isEditing?<input value={edited[f]||""} onChange={(e)=>uf(f,e.target.value)} className="border rounded px-2 py-0.5 w-28 text-right text-sm"/>:<span className="text-sky-900 font-semibold">{rml[f]?`${rml[f]}${s}`:<span className="text-gray-300">—</span>}</span>}</div>))}
@@ -80,6 +103,21 @@ export default function RamLambProfile() {
             {!isEditing&&!rml.targetWeight&&<p className="text-gray-300 text-xs">Set target weight in Edit Profile</p>}
           </div>
           {dr.length>0&&dr.at(-1).nextDate&&<div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 text-sm"><p className="font-semibold text-orange-700 text-xs uppercase mb-1">Next Drench Due</p><p className="font-bold text-orange-900">{dr.at(-1).nextDate}</p></div>}
+
+          {/* ── SELL BUTTON ── */}
+          {rml.status !== "Sold" && (
+            <button
+              onClick={() => setShowSellModal(true)}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition shadow text-sm flex items-center justify-center gap-2"
+            >
+              💰 Sell this Ram Lamb
+            </button>
+          )}
+          {rml.status === "Sold" && (
+            <div className="bg-gray-100 rounded-xl px-4 py-3 text-center text-sm text-gray-500 font-semibold">
+              ✅ This ram lamb has been sold
+            </div>
+          )}
         </div>
 
         {/* RIGHT */}
@@ -106,6 +144,23 @@ export default function RamLambProfile() {
           <GrowthTable records={gr} onDelete={(rid)=>del("growthRecords",rid)} accentHover="hover:bg-sky-50/40"/>
         </div>
       </div>
+
+      {/* ══ SELL ANIMAL MODAL ══ */}
+      {showSellModal && (
+        <SellAnimalModal
+          animal={rml}
+          species="Sheep"
+          onConfirm={() => {
+            upd({ ...rml, status: "Sold" });
+            setShowSellModal(false);
+            if (isEditing) { setIsEditing(false); setEdited(null); }
+          }}
+          onCancel={() => {
+            setShowSellModal(false);
+            if (isEditing) uf("status", rml.status);
+          }}
+        />
+      )}
 
       {modal==="growth"&&<Modal title="Add Growth Record" onClose={()=>setModal(null)}><Field label="Date"><input type="date" value={newGrowth.date} onChange={(e)=>setNewGrowth({...newGrowth,date:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="Weight (kg)"><input type="number" step="0.1" value={newGrowth.weight} onChange={(e)=>setNewGrowth({...newGrowth,weight:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="BCS"><BCSPicker value={newGrowth.bcs} onChange={(v)=>setNewGrowth({...newGrowth,bcs:v})}/></Field><Field label="Est. Price (KES)"><input type="number" value={newGrowth.price} onChange={(e)=>setNewGrowth({...newGrowth,price:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><div className="flex gap-3 pt-2"><button onClick={addGrowth} className="flex-1 bg-sky-600 text-white py-2 rounded-xl hover:bg-sky-700 font-semibold">Save</button><button onClick={()=>setModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-xl">Cancel</button></div></Modal>}
       {modal==="viewGrowth"&&<Modal title={`Growth — ${gr.length}`} onClose={()=>setModal(null)}><button onClick={()=>setModal("growth")} className="mb-4 bg-sky-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-sky-700">+ Add</button>{gr.length===0?<p className="text-gray-400 text-center py-8">No records.</p>:<div className="space-y-3">{[...gr].reverse().map((r)=><div key={r.id} className="bg-sky-50 rounded-xl p-3 flex justify-between"><div><p className="font-semibold text-sky-900 text-sm">{r.date}</p>{r.weight&&<p className="text-xs text-gray-600">⚖️ {r.weight} kg</p>}{r.bcs>0&&<BCSBadge score={r.bcs}/>}</div><button onClick={()=>del("growthRecords",r.id)} className="text-red-400 hover:text-red-600 text-lg ml-3">&times;</button></div>)}</div>}</Modal>}

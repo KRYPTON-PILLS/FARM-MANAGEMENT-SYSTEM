@@ -1,0 +1,213 @@
+/* CreateListingModal.css */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 30, 10, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #d4e4d4;
+  flex-shrink: 0;
+}
+
+.modal-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a2e1a;
+  margin: 0;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  color: #7a9a7a;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.modal-close:hover {
+  background: #f0f7f0;
+  color: #1a2e1a;
+}
+
+.modal-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.form-row-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3d5c3d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #c5d9c5;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: #fff;
+  color: #1a2e1a;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: #2d5a27;
+}
+
+.input-error {
+  border-color: #c94040 !important;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.input-with-unit {
+  display: flex;
+  gap: 0;
+}
+
+.input-with-unit .form-input {
+  border-radius: 8px 0 0 8px;
+  border-right: none;
+  flex: 1;
+}
+
+.unit-select {
+  padding: 0.55rem 0.5rem;
+  border: 1px solid #c5d9c5;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.8rem;
+  background: #f5f9f5;
+  color: #3d5c3d;
+  outline: none;
+  cursor: pointer;
+  min-width: 70px;
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: #c94040;
+  margin-top: 2px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #3d5c3d;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #2d5a27;
+  cursor: pointer;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #d4e4d4;
+  flex-shrink: 0;
+}
+
+.btn-cancel {
+  padding: 0.55rem 1.1rem;
+  background: transparent;
+  border: 1px solid #c5d9c5;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #5a7a5a;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-cancel:hover {
+  background: #f0f7f0;
+}
+
+.btn-post {
+  padding: 0.55rem 1.25rem;
+  background: #2d5a27;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-post:hover:not(:disabled) {
+  background: #1e3f1a;
+}
+
+.btn-post:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 500px) {
+  .form-row-split { grid-template-columns: 1fr; }
+  .modal-box { max-height: 95vh; }
+}

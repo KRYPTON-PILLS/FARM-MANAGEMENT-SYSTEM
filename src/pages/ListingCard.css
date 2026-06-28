@@ -1,0 +1,323 @@
+/* ListingCard.css */
+
+.listing-card {
+  background: #fff;
+  border: 1px solid #d4e4d4;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.15s, transform 0.15s;
+  position: relative;
+}
+
+.listing-card:hover {
+  box-shadow: 0 4px 16px rgba(45, 90, 39, 0.1);
+  transform: translateY(-2px);
+}
+
+.listing-img-wrap {
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  background: #f0f7f0;
+}
+
+.listing-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.listing-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.listing-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.listing-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.type-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Owner controls row ── */
+.owner-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.owner-badge {
+  font-size: 0.7rem;
+  color: #5a7a5a;
+  background: #f0f7f0;
+  border: 1px solid #c5d9c5;
+  padding: 2px 7px;
+  border-radius: 8px;
+}
+
+/* ── Delete (✕) button ── */
+.btn-delete-listing {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #e0c5c5;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  color: #c94040;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s;
+  padding: 0;
+}
+
+.btn-delete-listing:hover {
+  background: #fde8e8;
+  border-color: #c94040;
+}
+
+.listing-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a2e1a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.listing-desc {
+  font-size: 0.8rem;
+  color: #5a7a5a;
+  margin: 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.listing-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+}
+
+.meta-label {
+  color: #7a9a7a;
+  font-weight: 500;
+}
+
+.meta-val {
+  color: #2a3e2a;
+  font-weight: 600;
+}
+
+.listing-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #edf5ed;
+}
+
+.listing-price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.listing-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a4d1a;
+  font-variant-numeric: tabular-nums;
+}
+
+.price-unit {
+  font-size: 0.75rem;
+  color: #7a9a7a;
+}
+
+.neg-badge {
+  background: #fffbe8;
+  color: #8a7010;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid #e8d870;
+}
+
+.listing-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn-inquire {
+  padding: 0.4rem 0.875rem;
+  background: #2d5a27;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.btn-inquire:hover:not(:disabled) {
+  background: #1e3f1a;
+}
+
+.btn-inquire.sent {
+  background: #5a9a54;
+  cursor: default;
+}
+
+.btn-mark-sold {
+  padding: 0.4rem 0.875rem;
+  background: transparent;
+  color: #8a4a10;
+  border: 1px solid #e07a30;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-mark-sold:hover {
+  background: #fef3e8;
+}
+
+.listing-date {
+  font-size: 0.72rem;
+  color: #9aaa9a;
+  margin: 0;
+}
+
+/* ── Confirm overlay (inside card) ── */
+.card-confirm-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 30, 10, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.card-confirm-box {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  text-align: center;
+  max-width: 230px;
+  width: 90%;
+}
+
+.card-confirm-box p {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a2e1a;
+  margin: 0 0 0.25rem;
+}
+
+.card-confirm-sub {
+  font-size: 0.75rem !important;
+  font-weight: 400 !important;
+  color: #7a9a7a !important;
+  margin-bottom: 1rem !important;
+}
+
+.card-confirm-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.btn-confirm-cancel {
+  padding: 0.4rem 0.875rem;
+  background: transparent;
+  border: 1px solid #c5d9c5;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #5a7a5a;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-confirm-cancel:hover {
+  background: #f0f7f0;
+}
+
+.btn-confirm-delete {
+  padding: 0.4rem 0.875rem;
+  background: #c94040;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-confirm-delete:hover {
+  background: #a02e2e;
+}
+
+.btn-confirm-sold {
+  padding: 0.4rem 0.875rem;
+  background: #2d5a27;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-confirm-sold:hover {
+  background: #1e3f1a;
+}

@@ -23,6 +23,7 @@ import Signup       from "./pages/Signup.jsx";
 import AssistantHub from "./pages/AssistantHub.jsx";
 import UserProfile  from "./pages/UserProfile.jsx";
 import Sales        from "./pages/Sales.jsx";
+import MarketPage from "./pages/MarketPage.jsx";
 
 /* Animal species pages */
 import Cattle  from "./pages/Cattle.jsx";
@@ -108,6 +109,7 @@ const router = createBrowserRouter([
       { path: "crops/:id",        element: <CropProfile /> },
       { path: "reports",          element: <Reports /> },
       { path: "sales",            element: <Sales /> },
+      { path: "marketpage",       element: <MarketPage /> },
 
       /* ── Animal species ── */
       { path: "animals/cattle",   element: <Cattle /> },

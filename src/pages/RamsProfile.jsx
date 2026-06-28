@@ -3,6 +3,8 @@ import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
 import { Modal, Field, BCSPicker, BCSBadge, FAMACHAPicker, FAMACHABadge, ActionCard, GrowthTable } from "../components/SheepHelpers";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar } from "recharts";
+import SellAnimalModal from "../components/SellAnimalModal";
+import { uploadAnimalPhoto } from "../utils/imageUpload";
 
 const WOOL_GRADES = ["Fine (18–22 micron)","Medium Fine (23–26 micron)","Medium (27–30 micron)","Strong (31–35 micron)","Very Strong (36+ micron)"];
 
@@ -10,10 +12,20 @@ export default function RamsProfile() {
   const { id } = useParams(); const navigate = useNavigate();
   const { animals=[], setAnimals } = useContext(FarmContext);
   const ram = animals.find((a)=>a.id?.toString()===id&&a.category==="sheep"&&a.type?.toLowerCase()==="ram");
-  const upd = (u)=>setAnimals((p)=>p.map((a)=>a.id?.toString()===id?u:a));
+  
+  const updatedRam = (ramData)=>
+    setAnimals((p)=>
+      p.map((a)=>
+        a.id?.toString()===id ? ramData : a
+      )
+    );
+
+  // Short alias used by all record-add helpers and del()
+  const upd = updatedRam;
 
   const [isEditing,setIsEditing]=useState(false); const [edited,setEdited]=useState(null);
   const [modal,setModal]=useState(null);
+  const [showSellModal, setShowSellModal] = useState(false);
   const [newGrowth,setNewGrowth]=useState({date:"",weight:"",bcs:0,price:"",notes:""});
   const [newFeed,setNewFeed]=useState({date:"",feedType:"",amount:"",minerals:"",notes:""});
   const [newMed,setNewMed]=useState({date:"",type:"",medicine:"",vetName:"",cost:"",notes:""});
@@ -23,12 +35,44 @@ export default function RamsProfile() {
 
   if (!ram) return <p className="p-6 text-red-600">Ram not found.</p>;
 
-  const gr=ram.growthRecords||[]; const fr=ram.feedRecords||[]; const ml=ram.medicalLog||[];
-  const dr=ram.drenchingRecords||[]; const wr=ram.woolRecords||[]; const br=ram.breedingRecords||[];
+  const gr=ram.growthRecords||[]; 
+  const fr=ram.feedRecords||[]; 
+  const ml=ram.medicalLog||[];
+  const dr=ram.drenchingRecords||[]; 
+  const wr=ram.woolRecords||[]; 
+  const br=ram.breedingRecords||[];
 
-  const startEdit=()=>{setIsEditing(true);setEdited({...ram});}; const cancelEdit=()=>{setIsEditing(false);setEdited(null);};
-  const saveEdit=()=>{upd(edited);setIsEditing(false);setEdited(null);}; const uf=(f,v)=>setEdited((p)=>({...p,[f]:v}));
-  const imgUp=(e)=>{ const f=e.target.files?.[0]; if(!f) return; const r=new FileReader(); r.onloadend=()=>upd({...ram,image:r.result}); r.readAsDataURL(f); };
+  const startEdit=()=>{setIsEditing(true);setEdited({...ram});}; 
+  const cancelEdit=()=>{setIsEditing(false);setEdited(null);};
+  const saveEdit=()=>{updatedRam(edited);setIsEditing(false);setEdited(null);}; 
+  const uf=(f,v)=>setEdited((p)=>({...p,[f]:v}));
+  
+  /* ── image upload ── */
+  const [photoUploading,  setPhotoUploading] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setPhotoUploading(true);
+      const url = await uploadAnimalPhoto(file, "sheep");
+      updatedRam({ ...ram, image: url });
+    } catch (err) {
+      console.error("Upload failed:", err);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+
+  /* ── Status change — intercept "Sold" to show sell modal ── */
+  const handleStatusChange = (newStatus) => {
+    if (newStatus === "Sold") {
+      setShowSellModal(true);
+    } else {
+      updateField("status", newStatus);
+    }
+  };
 
   const addGrowth=()=>{ if(!newGrowth.date) return; upd({...ram,growthRecords:[...gr,{...newGrowth,id:Date.now()}]}); setNewGrowth({date:"",weight:"",bcs:0,price:"",notes:""}); setModal("viewGrowth"); };
   const addFeed=()=>{ if(!newFeed.date||!newFeed.feedType) return; upd({...ram,feedRecords:[...fr,{...newFeed,id:Date.now()}]}); setNewFeed({date:"",feedType:"",amount:"",minerals:"",notes:""}); setModal("viewFeed"); };
@@ -46,11 +90,21 @@ export default function RamsProfile() {
 
   const statusColor={Healthy:"bg-green-100 text-green-800",Sick:"bg-red-100 text-red-700","Under Treatment":"bg-amber-100 text-amber-700"}[ram.status]||"bg-gray-100 text-gray-600";
   const [activeMetrics,setActiveMetrics]=useState(["weight"]);
-  const METRICS=[{key:"weight",label:"Weight",color:"#065f46"},{key:"bcs",label:"BCS",color:"#16a34a"}];
+  const METRICS=[{
+    key:"weight",
+    label:"Weight",
+    color:"#065f46"
+  },{
+    key:"bcs",
+    label:"BCS",
+    color:"#16a34a"
+  }];
   const toggleM=(k)=>setActiveMetrics((p)=>p.includes(k)?p.length>1?p.filter((x)=>x!==k):p:[...p,k]);
 
   return (
     <div className="bg-emerald-50 flex flex-col">
+
+      {/* TOP BAR */}
       <div className="flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 bg-white shadow-sm flex-wrap">
         <button onClick={()=>navigate(-1)} className="bg-white shadow w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-emerald-700"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
@@ -62,13 +116,37 @@ export default function RamsProfile() {
         </div>
       </div>
 
+
+      {/* BODY */}
       <div className="flex flex-1 gap-6 p-4 sm:p-6 flex-col lg:flex-row">
+
+
         {/* LEFT */}
         <div className="flex flex-col gap-4 w-full lg:w-72 lg:shrink-0">
+
+          {/* IMAGE */}
           <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
-            {ram.image?<img src={ram.image} alt={ram.name} className="w-full h-full object-cover"/>:<div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>}
-            <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer"><span className="opacity-0 group-hover:opacity-100 bg-white/90 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full transition">Change photo</span><input type="file" accept="image/*" className="hidden" onChange={imgUp}/></label>
+            {ram.image
+              ?<img src={ram.image} alt={ram.name} className="w-full h-full object-cover"/>
+              :<div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>
+            }
+
+            // Show uploading state on the image:
+            {photoUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span className="text-white text-sm font-semibold">Uploading…</span>
+              </div>
+            )}
+
+            <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer">
+              <span className="opacity-0 group-hover:opacity-100 bg-white/90 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full transition">
+                Change photo
+              </span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload}/>
+            </label>
           </div>
+
+
           <div className="bg-white rounded-2xl shadow p-4 text-sm space-y-2">
             {[{l:"Breed",f:"breed"},{l:"Color",f:"color"},{l:"Weight",f:"weight",s:" kg"},{l:"Age",f:"age",s:" yrs"}].map(({l,f,s=""})=>(
               <div key={f} className="flex justify-between items-center border-b last:border-0 pb-1 last:pb-0">
@@ -93,6 +171,22 @@ export default function RamsProfile() {
               {dr.length>0&&dr.at(-1).nextDate&&<div className="flex justify-between"><span className="text-gray-500">Next drench</span><span className="font-bold text-orange-600">{dr.at(-1).nextDate}</span></div>}
             </div>
           </div>
+
+          {/* ── SELL BUTTON ── */}
+          {ram.status !== "Sold" && (
+            <button
+              onClick={() => setShowSellModal(true)}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition shadow text-sm flex items-center justify-center gap-2"
+            >
+              💰 Sell this Ram
+            </button>
+          )}
+
+          {ram.status === "Sold" && (
+            <div className="bg-gray-100 rounded-xl px-4 py-3 text-center text-sm text-gray-500 font-semibold">
+              ✅ This ram has been sold
+            </div>
+          )}
         </div>
 
         {/* RIGHT */}
@@ -128,6 +222,23 @@ export default function RamsProfile() {
           <GrowthTable records={gr} onDelete={(rid)=>del("growthRecords",rid)} accentHover="hover:bg-emerald-50/40"/>
         </div>
       </div>
+
+      {/* ══ SELL ANIMAL MODAL ══ */}
+            {showSellModal && (
+              <SellAnimalModal
+                animal={ram}
+                species="Sheep"
+                onConfirm={() => {      
+                  updatedRam({ ...ram, status: "Sold" });
+                  setShowSellModal(false);
+                  if (isEditing) { setIsEditing(false); setEdited(null); }
+                }}
+                onCancel={() => {
+                  setShowSellModal(false);
+                  if (isEditing) uf("status", ram.status);
+                }}
+              />
+            )}      
 
       {/* MODALS */}
       {modal==="growth"&&<Modal title="Add Growth Record" onClose={()=>setModal(null)}><Field label="Date"><input type="date" value={newGrowth.date} onChange={(e)=>setNewGrowth({...newGrowth,date:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="Weight (kg)"><input type="number" step="0.1" value={newGrowth.weight} onChange={(e)=>setNewGrowth({...newGrowth,weight:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="BCS"><BCSPicker value={newGrowth.bcs} onChange={(v)=>setNewGrowth({...newGrowth,bcs:v})}/></Field><Field label="Est. Price (KES)"><input type="number" value={newGrowth.price} onChange={(e)=>setNewGrowth({...newGrowth,price:e.target.value})} className="border rounded-lg p-2 w-full"/></Field><Field label="Notes"><textarea value={newGrowth.notes} onChange={(e)=>setNewGrowth({...newGrowth,notes:e.target.value})} className="border rounded-lg p-2 w-full h-16 resize-none"/></Field><div className="flex gap-3 pt-2"><button onClick={addGrowth} className="flex-1 bg-emerald-700 text-white py-2 rounded-xl hover:bg-emerald-800 font-semibold">Save</button><button onClick={()=>setModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-xl">Cancel</button></div></Modal>}

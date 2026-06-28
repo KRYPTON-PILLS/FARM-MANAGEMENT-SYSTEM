@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useContext, useState } from "react";
 import { FarmContext } from "../context/FarmContext";
+import SellAnimalModal from "../components/SellAnimalModal";
+import { uploadAnimalPhoto } from "../utils/imageUpload.js";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
@@ -99,8 +101,10 @@ export default function BullsProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedBull, setEditedBull] = useState(null);
 
+
   /* ── modal ── */
   const [modal, setModal] = useState(null);
+  const [showSellModal, setShowSellModal] = useState(false);
 
   /* ── chart active metrics (multi-select) ── */
   const [activeMetrics, setActiveMetrics] = useState(["weight"]);
@@ -145,12 +149,17 @@ export default function BullsProfile() {
     }
   };
 
-  // Show uploading state on the image:
-  {photoUploading && (
-    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-      <span className="text-white text-sm font-semibold">Uploading…</span>
-    </div>
-  )}
+
+  /* ── Status change — intercept "Sold" to show sell modal ── */
+  const handleStatusChange = (newStatus) => {
+    if (newStatus === "Sold") {
+      setShowSellModal(true);
+    } else {
+      updateField("status", newStatus);
+    }
+  };
+  
+    
 
   /* ── add / delete records ── */
   const addGrowth = () => {
@@ -163,6 +172,7 @@ export default function BullsProfile() {
   const deleteGrowth = (rid) =>
     updateBull({ ...bull, growthRecords: growthRecords.filter((r) => r.id !== rid) });
 
+  /* --- add/delete feed --- */
   const addFeed = () => {
     if (!newFeed.date || !newFeed.feedType) return;
     const updated = [...feedRecords, { ...newFeed, id: Date.now() }];
@@ -173,6 +183,7 @@ export default function BullsProfile() {
   const deleteFeed = (rid) =>
     updateBull({ ...bull, feedRecords: feedRecords.filter((r) => r.id !== rid) });
 
+  /* --- add/delete medical --- */
   const addMedical = () => {
     if (!newMedical.date || !newMedical.type) return;
     const updated = [...medicalLog, { ...newMedical, id: Date.now() }];
@@ -248,6 +259,15 @@ export default function BullsProfile() {
               ? <img src={bull.image} alt={bull.name} className="w-full h-full object-cover" />
               : <div className="flex items-center justify-center h-full text-gray-400 text-sm">No image</div>
             }
+
+            // Show uploading state on the image:
+            {photoUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span className="text-white text-sm font-semibold">Uploading…</span>
+              </div>
+            )}
+
+
             <label className="absolute inset-0 flex items-end justify-center pb-4 bg-black/0 group-hover:bg-black/30 transition cursor-pointer">
               <span className="opacity-0 group-hover:opacity-100 transition bg-white/90 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
                 Change photo
@@ -300,6 +320,22 @@ export default function BullsProfile() {
               </div>
             ))}
           </div>
+
+          {/* ── SELL BUTTON ── */}
+          {bull.status !== "Sold" && (
+            <button
+              onClick={() => setShowSellModal(true)}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition shadow text-sm flex items-center justify-center gap-2"
+            >
+              💰 Sell this Bull
+            </button>
+          )}
+
+          {bull.status === "Sold" && (
+            <div className="bg-gray-100 rounded-xl px-4 py-3 text-center text-sm text-gray-500 font-semibold">
+              ✅ This bull has been sold
+            </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN */}
@@ -324,13 +360,23 @@ export default function BullsProfile() {
                   </div>
               }
             </div>
+
             {isEditing && (
               <div className="mt-4">
                 <p className="text-xs font-semibold text-gray-400 uppercase mb-1">Status</p>
-                <select value={editedBull.status || ""} onChange={(e) => updateField("status", e.target.value)}
-                  className="border rounded-lg px-3 py-2 text-sm w-48">
+                <select 
+                  value={editedBull.status || ""} 
+                  onChange={(e) => updateField(e.target.value)}
+                  className="border rounded-lg px-3 py-2 text-sm w-48"
+                >
+
                   {["Healthy", "Sick", "Under Treatment", "Sold"].map((s) => <option key={s}>{s}</option>)}
                 </select>
+                {editedBull.status !== "Sold" && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Select "Sold" to record a sale - a form will appear to capture the <details className=""></details>
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -575,6 +621,23 @@ export default function BullsProfile() {
           )}
         </div>
       </div>
+
+      {/* ══ SELL ANIMAL MODAL ══ */}
+      {showSellModal && (
+        <SellAnimalModal
+          animal={bull}
+          species="Cattle"
+          onConfirm={() => {      
+            updateBull({ ...bull, status: "Sold" });
+            setShowSellModal(false);
+            if (isEditing) { setIsEditing(false); setEditedBull(null); }
+          }}
+          onCancel={() => {
+            setShowSellModal(false);
+            if (isEditing && editedBull) updateField("status", bull.status);
+          }}
+        />
+      )}      
 
       {/* ══════════════════ MODALS ══════════════════ */}
 
