@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children }) {
       <div className="min-h-screen bg-green-900 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4 animate-bounce">🌿</div>
-          <p className="text-green-300 font-semibold text-lg">Loading Farm System...</p>
+          <p className="text-green-300 font-semibold text-lg">Loading FanakaCo...</p>
           <div className="mt-4 flex justify-center gap-1.5">
             {[0,1,2].map((i)=>(
               <div key={i} className="w-2 h-2 bg-green-400 rounded-full animate-bounce"

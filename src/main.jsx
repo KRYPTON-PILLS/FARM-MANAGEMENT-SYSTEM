@@ -12,6 +12,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 /* Layout */
 import FarmShell from "./components/FarmShell";
 
+/* HELP CENTER */
+import HelpCenter from "./pages/HelpCenter.jsx";
+
 /* Pages */
 import Dashboard    from "./pages/Dashboard.jsx";
 import Animals      from "./pages/Animals.jsx";
@@ -24,7 +27,13 @@ import AssistantHub from "./pages/AssistantHub.jsx";
 import UserProfile  from "./pages/UserProfile.jsx";
 import Sales        from "./pages/Sales.jsx";
 import MarketPage from "./pages/MarketPage.jsx";
-
+import ReportsActivityInventory from "./pages/ReportsActivityInventory.jsx";
+import ReportsCropsFeed from "./pages/ReportsCropsFeed.jsx";
+import ReportsFinancials from "./pages/ReportsFinancials.jsx";
+import ReportsLivestockHealth from "./pages/ReportsLivestockHealth.jsx";
+import ReportsOverview from "./pages/ReportsOverview.jsx";
+import ProductionReports from "./pages/ProductionReports.jsx";
+import Profilesetupcard  from  "./pages/Profilesetupcard.jsx";  
 /* Animal species pages */
 import Cattle  from "./pages/Cattle.jsx";
 import Sheep   from "./pages/Sheep.jsx";
@@ -107,9 +116,21 @@ const router = createBrowserRouter([
       { path: "animals",          element: <Animals /> },
       { path: "crops",            element: <Crops /> },
       { path: "crops/:id",        element: <CropProfile /> },
-      { path: "reports",          element: <Reports /> },
+      { path: 'about',             element: <HelpCenter /> },
+      { path: "reports",  
+        element: <Reports />,
+        children: [
+          { index: true, element: <ReportsOverview /> },
+          { path: "financials", element: <ReportsFinancials /> },
+          { path: "livestock-health", element: <ReportsLivestockHealth /> },
+          { path: "production", element: <ProductionReports /> },
+          { path: "crops-feed", element: <ReportsCropsFeed /> },
+          { path: "activity-inventory", element: <ReportsActivityInventory/> },
+        ],
+      },
       { path: "sales",            element: <Sales /> },
       { path: "marketpage",       element: <MarketPage /> },
+      { path: "profilesetup",     element: <Profilesetupcard /> },
 
       /* ── Animal species ── */
       { path: "animals/cattle",   element: <Cattle /> },

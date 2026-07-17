@@ -60,7 +60,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-4">
             <span className="text-4xl">🌿</span>
           </div>
-          <h1 className="text-3xl font-bold text-white">Farm System</h1>
+          <h1 className="text-3xl font-bold text-white">FanakaCo</h1>
           <p className="text-green-300 mt-1 text-sm">
             Manage your farm intelligently
           </p>

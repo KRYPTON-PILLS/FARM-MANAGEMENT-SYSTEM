@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { UseProfile } from "../hooks/UseProfile.js";
+import { useOnboarding } from "../components/onboarding/OnboardingProvider";
+import ProfileSetupCard from "../components/onboarding/ProfileSetupCard";
 
 
 
@@ -81,6 +83,8 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const { currentUser, logout, resetPassword, firebaseAvailable } = useAuth();
   const { profile, updateProfile } = UseProfile();
+  const { phase, startTour } = useOnboarding();
+  const [showSetupCard, setShowSetupCard] = useState(true);
   useEffect(() => {
   console.log("Profile changed:", profile);
 }, [profile]);
@@ -99,6 +103,16 @@ export default function UserProfile() {
     setForm({ ...profile });
   }, [profile]);
   const fileRef = useRef();
+
+  // First-time onboarding lands here straight after the welcome modal, with
+  // an empty profile — go straight into edit mode instead of leaving them on
+  // a page full of "Not set" read-only fields with no obvious way in.
+  useEffect(() => {
+    if (phase === "awaiting-profile") {
+      setEditing(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   const uf = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -120,6 +134,13 @@ export default function UserProfile() {
 
       setSaved(true);
       setEditing(false);
+
+      // Only start the spotlight tour if this save is happening as part of
+      // first-time onboarding — not every time an existing user tweaks their
+      // bio or phone number later.
+      if (phase === "awaiting-profile") {
+        startTour();
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -202,6 +223,11 @@ export default function UserProfile() {
       </div>
 
       <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+
+        <ProfileSetupCard
+          show={showSetupCard && !profile?.farmName}
+          onDismiss={() => setShowSetupCard(false)}
+        />
 
         {/* ── PROFILE HEADER CARD ── */}
         <div className="bg-white rounded-2xl shadow p-4 sm:p-6 flex flex-wrap items-center gap-4 sm:gap-6">

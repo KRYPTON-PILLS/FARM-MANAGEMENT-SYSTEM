@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback } from "react";
+import { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebaseConfig.js";
 import { generateAllAlerts } from "../utils/farmAssistant.js";
@@ -404,3 +404,14 @@ export function FarmProvider({ children }) {
     </FarmContext.Provider>
   );
 }
+
+export default FarmProvider;
+export const useFarm = () => {
+  const context = useContext(FarmContext);
+
+  if (!context) {
+    throw new Error("useFarm must be used within a FarmProvider");
+  }
+
+  return context;
+};
